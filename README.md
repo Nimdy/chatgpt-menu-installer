@@ -22,6 +22,7 @@ This comprehensive menu-based installer is designed for individuals who wish to 
 8. Installs Custom Login Form on demand
 9. Remove Custom Login Form on demand
 10. Configures envorimental variables:
+11. Checks McKay Wrigley's Chatbot UI for updates and updates it.
 ```
 OPENAI_API_KEY if no input leave var blank
 OPENAI_API_HOST if no input enter https://api.openai.com
