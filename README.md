@@ -1,4 +1,4 @@
-#Self-Hosted Chatbot UI Installer by McKay Wrigley
+# Self-Hosted Chatbot UI Installer by McKay Wrigley
 
 Currently supports Ubuntu LTS
 
