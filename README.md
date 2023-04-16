@@ -1,5 +1,11 @@
 # THIS IS NOT READY YET! DO NOT USE... Thanks ;)
 
+**To-Do:**
+
+- [ ] Complete Seperate Function Files
+- [ ] Take all function files and combine them into one menu
+- [ ] Validate stuff works
+
 Currently supports Ubuntu LTS
 
 Self-Hosted Chatbot UI Installer by McKay Wrigley
