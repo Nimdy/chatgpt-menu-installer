@@ -25,3 +25,15 @@ This comprehensive menu-based installer is designed for individuals who wish to 
 
 
 This installer simplifies the process of setting up your self-hosted chatbot UI, making it easier and more efficient.
+
+
+# Setups for Installation:
+1. sudo apt update
+2. sudo apt upgrade
+3. sudo apt install python3
+4. sudo apt install python3-pip
+5. pip3 install -r requirements.txt
+
+# Start Menu
+
+1. python3 menu.py
