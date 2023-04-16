@@ -155,7 +155,6 @@ def configure_nginx():
 
     domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
 
-
     nginx_config = f"""
 server {{
     listen 80;
@@ -207,10 +206,22 @@ server {{
         return
 
     if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): "):
-        os.system("sudo systemctl restart nginx")
-        print("Nginx restarted with the new configuration.")
+        is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
+
+        if is_successful:
+            print("Nginx restarted with the new configuration.")
+        else:
+            print("Job for nginx.service failed because the control process exited with error code.")
+            _, status_output, _ = safe_system_call("systemctl status nginx.service")
+            print("Output of 'systemctl status nginx.service':")
+            print(status_output)
+            _, journal_output, _ = safe_system_call("journalctl -xe")
+            print("Output of 'journalctl -xe':")
+            print(journal_output)
+
     else:
         print("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.")
+
 
     if not domain_name:
         domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
