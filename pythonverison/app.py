@@ -30,6 +30,10 @@ def get_user_response(prompt):
         else:
             print("Invalid input. Please answer with 'y' or 'n'.")
 
+def safe_system_call(cmd):
+    result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.returncode == 0, result.stdout, result.stderr
+
 def update_and_upgrade_system():
     print("Updating the package list...")
     os.system("sudo apt-get update")
