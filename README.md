@@ -18,7 +18,7 @@ Currently supports Ubuntu LTS
 My login plugin
 
 
-![image](https://user-images.githubusercontent.com/16698453/232345628-5ae2dd6f-4e92-4de2-9d47-942e3e29f949.png)
+![image](https://user-images.githubusercontent.com/16698453/232345653-6792b639-0652-4cd1-8d27-5e8dd9affaba.png)
 
 
 
