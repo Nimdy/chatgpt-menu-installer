@@ -629,7 +629,7 @@ def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_c
     print(colored(f"│          Chatbot UI Management Dashboard                    │", "cyan"))
     print(colored("├─────────────────────────────────────────────────────────────┤", "cyan"))
     print(colored(f"│  1. Nginx Server: {nginx_status}", "magenta"))
-    print(colored(f"│  2. Docker Image of Chatbot UI: {docker_status}", "magenta"))
+    print(colored(f"│  2. Docker Service Status: {docker_status}", "magenta"))
     print(colored(f"│  3. Domain Name: {domain_name}", "magenta"))
     print(colored(f"│  4. Public IP: {public_ip}", "magenta"))
     print(colored(f"│  5. Total UI Accesses: {total_connections}", "magenta"))
@@ -639,7 +639,7 @@ def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_c
 def print_menu():
     print(colored("\nMenu:", "green"))
     print(colored("1. Update & Upgrade System", "green"))
-    print(colored("2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI", "green"))
+    print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Add Nimdys Login Form", "green"))
     print(colored("4. Remove Nimdys Login Form", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
