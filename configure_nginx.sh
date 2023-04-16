@@ -13,7 +13,6 @@ server {
     listen 80;
     listen [::]:80;
     server_name $domain_name;
-
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -21,19 +20,18 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
+
+        proxy_buffering off; # Disable response buffering
     }
 }
-
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name $domain_name;
-
     ssl_certificate /etc/letsencrypt/live/$domain_name/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$domain_name/privkey.pem;
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
     ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
-
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -41,8 +39,11 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
+
+        proxy_buffering off; # Disable response buffering
     }
 }
+
 EOT
 
   sudo ln -s /etc/nginx/sites-available/"$domain_name" /etc/nginx/sites-enabled/
