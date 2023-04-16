@@ -342,7 +342,11 @@ def setup_gpt_chatbot_ui():
     os.chdir("chatbot-ui")
 
     # Step 4: Rename .env.local.example to .env.local
-    shutil.move(".env.local.example", ".env.local")
+    if os.path.exists(".env.local.example"):
+        shutil.move(".env.local.example", ".env.local")
+    else:
+        print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.")
+
 
     # Step 5: Ask the user for input based on the following VARS
     env_vars = {
