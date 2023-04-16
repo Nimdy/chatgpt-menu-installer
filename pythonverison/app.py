@@ -30,7 +30,6 @@ def get_user_response(prompt):
         else:
             print("Invalid input. Please answer with 'y' or 'n'.")
 
-
 def update_and_upgrade_system():
     print("Updating the package list...")
     os.system("sudo apt-get update")
@@ -141,8 +140,7 @@ def configure_nginx():
     print("Configuring Nginx...")
 
     if not check_nginx_running():
-        user_input = input("Nginx is not running. Do you want to install and start Nginx? (y/n): ")
-        if user_input.lower() == "y":
+        if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): "):
             print("Installing Nginx...")
             os.system("sudo apt-get install -y nginx")
             print("Starting Nginx...")
@@ -151,12 +149,12 @@ def configure_nginx():
             print("Please install and start Nginx before configuring.")
             return
 
-    user_input = input("Do you want to add a new domain for the ChatGPT Chatbot UI? (y/n): ")
-    if user_input.lower() != "y":
+    if not get_user_response("Do you want to add a new domain for the ChatGPT Chatbot UI? (y/n): "):
         print("Aborted Nginx configuration.")
         return
 
     domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
+
 
     nginx_config = f"""
 server {{
@@ -193,14 +191,22 @@ server {{
 }}
     """
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
+    if os.path.exists(sites_available_path):
+        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): "):
+            print("Aborted Nginx configuration.")
+            return
+
     with open(sites_available_path, "w") as f:
         f.write(nginx_config)
 
-    os.system(f"sudo ln -s /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
-    os.system("sudo nginx -t")
+    os.system(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
+    is_successful, _, error = safe_system_call("sudo nginx -t")
+    if not is_successful:
+        print("Error: Nginx configuration test failed.")
+        print(error)
+        return
 
-    user_input = input("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): ")
-    if user_input.lower() == "y":
+    if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): "):
         os.system("sudo systemctl restart nginx")
         print("Nginx restarted with the new configuration.")
     else:
