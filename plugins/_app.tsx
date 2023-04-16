@@ -1,3 +1,5 @@
+// replace pages/_app.tsx with new code
+
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
