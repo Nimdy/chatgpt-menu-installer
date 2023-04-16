@@ -176,11 +176,22 @@ def configure_nginx():
             print("Aborted Nginx configuration.")
             return
         
-    if is_certbot_installed() and is_nginx_running() and verify_domain_accessible(domain_name):
-        setup_ssl_certbot()
+    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
+    key_path = f"/etc/letsencrypt/live/{domain_name}/privkey.pem"
+
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        print(f"SSL certificate files for {domain_name} already exist.")
+        if get_user_response("Do you want to overwrite or renew the certificate? (y/n): "):
+            if is_certbot_installed() and is_nginx_running() and verify_domain_accessible(domain_name):
+                setup_ssl_certbot()
+            else:
+                print("Skipping SSL-related configuration due to missing requirements or some other error.")
     else:
-        print("Skipping SSL-related configuration due to missing requirements or some other error.")        
-        
+        if is_certbot_installed() and is_nginx_running() and verify_domain_accessible(domain_name):
+            setup_ssl_certbot()
+        else:
+            print("Skipping SSL-related configuration due to missing requirements or some other error.")
+      
     nginx_config = f"""
 server {{
     listen 80;
