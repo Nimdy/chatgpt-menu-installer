@@ -22,64 +22,117 @@ def load_domain_name_from_file():
         with open("domain_name.txt", "r") as f:
             domain_name = f.read().strip()
     except FileNotFoundError:
-        print("Domain name not found. It will be set during the Nginx configuration process.")
+        print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
 
 def get_user_response(prompt):
     while True:
-        response = input(prompt).strip().lower()
+        response = input(colored(prompt, "yellow")).strip().lower()
         if response in ['y', 'n']:
             return response == 'y'
         else:
-            print("Invalid input. Please enter 'y' or 'n'.")
+            print(colored("Invalid input. Please enter 'y' or 'n'.", "red"))
 
 def safe_system_call(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
 def update_and_upgrade_system():
-    print("Updating the package list...")
+    print(colored("Updating the package list...", "cyan"))
     os.system("sudo apt-get update")
 
-    print("Upgrading the system...")
+    print(colored("Upgrading the system...", "cyan"))
     os.system("sudo apt-get upgrade -y")
 
-    print("Cleaning up unused packages...")
+    print(colored("Cleaning up unused packages...", "cyan"))
     os.system("sudo apt-get autoremove -y")
 
-    print("System update and upgrade completed.")
-    print("Please reboot the system to apply the changes.")
-    print("After rebooting, run this script again to continue with menu option 2.")
+    print(colored("System update and upgrade completed.", "green"))
+    print(colored("Please reboot the system to apply the changes.", "green"))
+    print(colored("After rebooting, run this script again to continue with menu option 2.", "green"))
 
 def create_new_user():
     while True:
-        new_username = input("Enter a new username: ").strip()
+        new_username = input(colored("Enter a new username: ", "yellow")).strip()
         if not new_username:
-            print("Username cannot be empty. Please try again.")
+            print(colored("Username cannot be empty. Please try again.", "red"))
             continue
 
         exists = subprocess.run(f"getent passwd {new_username}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
         if exists:
-            print("The provided username already exists. Please try another username.")
+            print(colored("The provided username already exists. Please try another username.", "red"))
             continue
         else:
             break
 
-    password = getpass.getpass(f"Enter the password for {new_username}: ")
-    confirm_password = getpass.getpass(f"Confirm the password for {new_username}: ")
+    password = getpass.getpass(colored(f"Enter the password for {new_username}: ", "yellow"))
+    confirm_password = getpass.getpass(colored(f"Confirm the password for {new_username}: ", "yellow"))
 
     while password != confirm_password:
-        print("Passwords don't match. Please try again.")
-        password = getpass.getpass(f"Enter the password for {new_username}: ")
-        confirm_password = getpass.getpass(f"Confirm the password for {new_username}: ")
+        print(colored("Passwords don't match. Please try again.", "red"))
+        password = getpass.getpass(colored(f"Enter the password for {new_username}: ", "yellow"))
+        confirm_password = getpass.getpass(colored(f"Confirm the password for {new_username}: ", "yellow"))
 
     encrypted_password = subprocess.check_output(f"openssl passwd -1 {password}", shell=True, text=True).strip()
 
     os.system(f"sudo useradd -m -p {encrypted_password} {new_username}")
     os.system(f"sudo usermod -aG sudo {new_username}")
-    print(f"User {new_username} created with sudo permissions.")
+    print(colored(f"User {new_username} created with sudo permissions.", "green"))
     return new_username
 
 def install_docker_docker_compose_git():
+    print(colored("Installing Docker, Docker Compose, and Git...", "cyan"))
+
+    print(colored("Installing Git...", "cyan"))
+    os.system("sudo apt-get install -y git")
+
+    print(colored("Installing Docker...", "cyan"))
+    os.system("sudo apt-get install -y docker.io")
+    os.system("sudo systemctl enable --now docker")
+
+    print(colored("Installing Docker Compose...", "cyan"))
+    os.system("sudo apt-get install -y docker-compose")
+
+    current_user = getpass.getuser()
+    if current_user == "root":
+        print(colored("\nWarning: It's not recommended to run Docker as root.", "yellow"))
+        print(colored("Please choose a different user to add to the docker group:", "yellow"))
+
+        home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
+        
+        if len(home_users) == 1 and "root" in home_users:
+            if get_user_response(colored("No users found other than root. Do you want to create a new user? (y/n): ", "yellow")):
+                new_user = create_new_user()
+                home_users.append(new_user)
+            else:
+                print(colored("Aborted adding a user to the docker group.", "red"))
+                return
+
+        for idx, user in enumerate(home_users):
+            print(colored(f"{idx + 1}. {user}", "green"))
+
+        while True:
+            selected_user = input(colored("\nEnter the number of the user you want to add to the docker group: ", "yellow"))
+            try:
+                selected_user = int(selected_user)
+                if 1 <= selected_user <= len(home_users):
+                    break
+                else:
+                    print(colored("Invalid selection. Please try again.", "red"))
+            except ValueError:
+                print(colored("Invalid input. Please enter a number.", "red"))
+
+        selected_user = home_users[selected_user - 1]
+        if selected_user == "root":
+            if not get_user_response(colored("Are you sure you want to add root to the docker group? (y/n): ", "yellow")):
+                print(colored("Aborted adding root to the docker group.", "red"))
+                return
+    else:
+        selected_user = current_user
+
+    print(colored(f"Adding {selected_user} to the docker group...", "cyan"))
+    os.system(f"sudo usermod -aG docker {selected_user}")
+
+    print(colored("Installation of Docker, Docker Compose, and Git completed.", "green"))
     print("Installing Docker, Docker Compose, and Git...")
 
     print("Installing Git...")
@@ -671,9 +724,9 @@ def main():
             update_and_upgrade_system()
         elif choice == "2":
             update_and_upgrade_system()
-            install_docker_docker_compose_git()
             configure_nginx()
             setup_ssl_certbot()
+            install_docker_docker_compose_git()
             setup_gpt_chatbot_ui()
         elif choice == "3":
             add_nimdys_login_form()
