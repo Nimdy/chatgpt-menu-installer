@@ -386,10 +386,20 @@ def setup_gpt_chatbot_ui():
         if user_input.lower() == "y":
             break
 
-    # Save and overwrite the vars in the .env.local file
-    with open(".env.local", "w") as f:
-        for key, value in env_vars.items():
-            f.write(f"{key}={value}\n")
+        # Check if the .env.local file exists
+        if os.path.exists(".env.local"):
+            if not get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): "):
+                print("Skipping overwriting the .env.local file.")
+            else:
+                # Save and overwrite the vars in the .env.local file
+                with open(".env.local", "w") as f:
+                    for key, value in env_vars.items():
+                        f.write(f"{key}={value}\n")
+        else:
+            # Create and write the vars in the .env.local file
+            with open(".env.local", "w") as f:
+                for key, value in env_vars.items():
+                    f.write(f"{key}={value}\n")
 
     # Test the docker-compose
     print("Testing the docker-compose...")
