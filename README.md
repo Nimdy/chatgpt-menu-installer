@@ -12,16 +12,29 @@ Self-Hosted Chatbot UI Installer by McKay Wrigley
 
 This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server. Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
 
-1. Install McKay Wrigley's Chatbot UI
-2. Install Nginx
-3. Configure Nginx
-4. Install Certbot
-5. Configure Certbot
-6. Install Docker and Docker Compose
-7. Configure Docker and Docker Compose settings
-8. Install Custom Login Form
-9. Configure Username and Password settings
-10. Launch Chatbot UI
+1. Installs McKay Wrigley's Chatbot UI
+2. Installs Nginx
+3. Configures Nginx
+4. Installs Certbot
+5. Configures Certbot
+6. Installs Docker and Docker Compose
+7. Configures Docker and Docker Compose
+8. Installs Custom Login Form on demand
+9. Remove Custom Login Form on demand
+10. Configures envorimental variables:
+```
+OPENAI_API_KEY if no input leave var blank
+OPENAI_API_HOST if no input enter https://api.openai.com
+OPENAI_API_TYPE if no input enter openai
+OPENAI_API_VERSION if not input enter 2023-03-15-preview
+AZURE_DEPLOYMENT_ID if no input leave var blank
+OPENAI_ORGANIZATION if no input leave var blank
+DEFAULT_MODEL if no input enter gpt-3.5-turbo	
+NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT if not input enter You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown.
+GOOGLE_API_KEY if no input leave var blank
+GOOGLE_CSE_ID if no input leave var blank
+```
+11. Launches Chatbot UI
 
 
 This installer simplifies the process of setting up your self-hosted chatbot UI, making it easier and more efficient.
