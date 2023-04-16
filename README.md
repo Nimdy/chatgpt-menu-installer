@@ -2,9 +2,11 @@
 
 **To-Do:**
 
-- [ ] Complete Seperate Function Files
-- [ ] Take all function files and combine them into one menu
+- [X] Complete Seperate Function Files
+- [X] Take all function files and combine them into one menu
 - [ ] Validate stuff works
+- [ ] Make is sexy
+- [ ] Add ability to load and unload plugins on demand
 
 Currently supports Ubuntu LTS
 
