@@ -466,8 +466,8 @@ def download_file(url, local_path):
 def add_nimdys_login_form():
     print("Adding Nimdys login form...")
 
-    user_input = input("Do you want to add Nimdys login form? (y/n): ")
-    if user_input.lower() != "y":
+    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ")
+    if not add_login_form:
         print("Aborted adding Nimdys login form.")
         return
 
@@ -480,11 +480,6 @@ def add_nimdys_login_form():
     shutil.copy("chatbot-ui/pages/_app.tsx", "chatbot-ui/pages/_app.tsx.bak")
     download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
                   "chatbot-ui/pages/_app.tsx")
-
-    # Download and replace .env.local.example in chatbot-ui/
-    shutil.copy("chatbot-ui/.env.local.example", "chatbot-ui/.env.local.example.bak")
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/.env.local.example",
-                  "chatbot-ui/.env.local.example")
 
     # Execute the commands in addlibs.txt
     response = requests.get("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/addlibs.txt")
@@ -508,8 +503,8 @@ def add_nimdys_login_form():
         for key, value in env_vars.items():
             print(f"{key}: {value}")
 
-        user_input = input("\nIs the information correct? (y/n): ")
-        if user_input.lower() == "y":
+        correct_info = get_user_response("\nIs the information correct? (y/n): ")
+        if correct_info:
             break
 
     # Save and overwrite the vars in the .env.local file
@@ -517,21 +512,37 @@ def add_nimdys_login_form():
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
 
+    # Check if .env.production file exists, create it if not, and add the vars
+    env_production_file = "chatbot-ui/.env.production"
+    if not os.path.exists(env_production_file):
+        with open(env_production_file, "w") as f:
+            for key, value in env_vars.items():
+                f.write(f"{key}={value}\n")
+
     print("Nimdys login form added.")
+
 
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
-    user_input = input("Do you want to remove Nimdys login form? (y/n): ")
-    if user_input.lower() != "y":
+    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ")
+    if not remove_login_form:
         print("Aborted removing Nimdys login form.")
         return
 
-    # Restore LoginForm.tsx in chatbot-ui/Settings/
-    shutil.move("chatbot-ui/Settings/LoginForm.tsx.bak", "chatbot-ui/Settings/LoginForm.tsx")
+    # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
+    login_form_backup = "chatbot-ui/Settings/LoginForm.tsx.bak"
+    if os.path.exists(login_form_backup):
+        shutil.move(login_form_backup, "chatbot-ui/Settings/LoginForm.tsx")
+    else:
+        print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
 
-    # Restore _app.tsx in chatbot-ui/pages/
-    shutil.move("chatbot-ui/pages/_app.tsx.bak", "chatbot-ui/pages/_app.tsx")
+    # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
+    app_tsx_backup = "chatbot-ui/pages/_app.tsx.bak"
+    if os.path.exists(app_tsx_backup):
+        shutil.move(app_tsx_backup, "chatbot-ui/pages/_app.tsx")
+    else:
+        print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
 
