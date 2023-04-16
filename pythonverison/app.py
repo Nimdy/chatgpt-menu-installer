@@ -6,7 +6,6 @@ import requests
 import shutil
 import socket
 
-
 domain_name = None
 
 def save_domain_name_to_file():
@@ -141,10 +140,10 @@ def check_nginx_running():
 
 def is_domain_publicly_visible(domain_name):
     try:
-        socket.gethostbyname(domain_name)
-        return True
+        ip_address = socket.gethostbyname(domain_name)
+        return True, ip_address
     except socket.gaierror:
-        return False
+        return False, None
 
 def configure_nginx():
     global domain_name
@@ -166,11 +165,21 @@ def configure_nginx():
 
     domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
 
-    if not is_domain_publicly_visible(domain_name):
-        print("Warning: The domain name is not publicly visible in DNS. This might cause issues with Certbot.")
+    domain_visible, ip_address = is_domain_publicly_visible(domain_name)
+    if not domain_visible:
+        print(f"Warning: The domain name {domain_name} is not publicly visible in DNS. This might cause issues with Certbot.")
+    else:
+        print(f"The domain name {domain_name} is publicly visible and resolves to IP address {ip_address}.")
+
+    if not domain_visible:
         if not get_user_response("Do you want to continue with the configuration? (y/n): "):
             print("Aborted Nginx configuration.")
             return
+        
+    if is_certbot_installed() and is_nginx_running() and verify_domain_accessible(domain_name):
+        setup_ssl_certbot()
+    else:
+        print("Skipping SSL-related configuration due to missing requirements or some other error.")        
         
     nginx_config = f"""
 server {{
@@ -266,10 +275,6 @@ def verify_domain_accessible(domain):
         return response.status_code == 200
     except requests.exceptions.RequestException:
         return False
-
-
-import os
-import subprocess
 
 def setup_ssl_certbot():
     global domain_name
