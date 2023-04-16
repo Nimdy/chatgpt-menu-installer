@@ -15,6 +15,24 @@ Currently supports Ubuntu LTS (havent testing it on other items yet)
 * Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
 * Free Credits without hacks... 
 
+## If using a blank clean VPS, please make a non-root user first
+
+1.
+```
+sudo adduser UserNameYouWant
+```
+2.
+```
+usermod -aG sudo UserNameYouWant
+```
+3.
+```
+visudo
+
+add:
+UserNameYouWant ALL=(ALL:ALL) ALL
+```
+4. Safe file and continue
 
 
 ![image](https://user-images.githubusercontent.com/16698453/232345507-fa2c9c9d-69f9-4415-bda3-ec5b6adce580.png)
