@@ -24,11 +24,11 @@ def load_domain_name_from_file():
 
 def get_user_response(prompt):
     while True:
-        user_input = input(prompt).lower()
-        if user_input in ('y', 'n'):
-            return user_input == 'y'
+        response = input(prompt).strip().lower()
+        if response in ['y', 'n']:
+            return response == 'y'
         else:
-            print("Invalid input. Please answer with 'y' or 'n'.")
+            print("Invalid input. Please enter 'y' or 'n'.")
 
 def safe_system_call(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -139,6 +139,13 @@ def check_nginx_running():
     except subprocess.CalledProcessError:
         return False
 
+def is_domain_publicly_visible(domain_name):
+    try:
+        socket.gethostbyname(domain_name)
+        return True
+    except socket.gaierror:
+        return False
+
 def configure_nginx():
     global domain_name
     print("Configuring Nginx...")
@@ -153,12 +160,18 @@ def configure_nginx():
             print("Please install and start Nginx before configuring.")
             return
 
-    if not get_user_response("Do you want to add a new domain for the ChatGPT Chatbot UI? (y/n): "):
+    if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): "):
         print("Aborted Nginx configuration.")
         return
 
     domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
 
+    if not is_domain_publicly_visible(domain_name):
+        print("Warning: The domain name is not publicly visible in DNS. This might cause issues with Certbot.")
+        if not get_user_response("Do you want to continue with the configuration? (y/n): "):
+            print("Aborted Nginx configuration.")
+            return
+        
     nginx_config = f"""
 server {{
     listen 80;
