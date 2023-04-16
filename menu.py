@@ -5,6 +5,9 @@ import subprocess
 import requests
 import shutil
 import socket
+import re
+import time
+
 
 domain_name = None
 
@@ -546,16 +549,110 @@ def remove_nimdys_login_form():
 
     print("Nimdys login form removed.")
 
+
+
+# Menu Header Functions for the Chatbot UI Management Dashboard
+
+def get_nginx_status():
+    try:
+        result = subprocess.run(['systemctl', 'is-active', 'nginx'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.stdout.strip() == 'active':
+            return 'Running'
+        else:
+            return 'Stopped'
+    except Exception as e:
+        print(f"Error checking Nginx status: {e}")
+        return 'Unknown'
+
+def get_docker_status():
+    try:
+        result = subprocess.run(['systemctl', 'is-active', 'docker'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.stdout.strip() == 'active':
+            return 'Running'
+        else:
+            return 'Stopped'
+    except Exception as e:
+        print(f"Error checking Docker status: {e}")
+        return 'Unknown'
+def get_domain_name():
+    try:
+        return socket.getfqdn()
+    except Exception as e:
+        print(f"Error retrieving domain name: {e}")
+        return 'Unknown'
+
+def get_ips():
+    try:
+        public_ip = requests.get("https://api.ipify.org").text
+        return  public_ip
+    except Exception as e:
+        print(f"Error retrieving IP addresses: {e}")
+        return 'Unknown', 'Unknown'
+
+def get_total_connections():
+    try:
+        log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
+        count = 0
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as f:
+                for line in f:
+                    count += 1
+        return count
+    except Exception as e:
+        print(f"Error retrieving connection count: {e}")
+        return 0
+
+def get_active_connections():
+    try:
+        log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
+        time_threshold = 300  # In seconds (e.g., 300 seconds equals 5 minutes)
+        current_time = time.time()
+        count = 0
+
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as f:
+                for line in f:
+                    timestamp = re.search(r'\[(.*?)\]', line)
+                    if timestamp:
+                        log_time = time.mktime(time.strptime(timestamp.group(1), "%d/%b/%Y:%H:%M:%S %z"))
+                        if (current_time - log_time) <= time_threshold:
+                            count += 1
+
+        return count
+    except Exception as e:
+        print(f"Error retrieving active connection count: {e}")
+        return 0
+    
 def main():
     load_domain_name_from_file()
     while True:
-        print("\nMenu:")
-        print("1. Update & Upgrade System")
-        print("2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI")
-        print("3. Add Nimdys Login Form")
-        print("4. Remove Nimdys Login Form")
-        print("42. Check for updates - GPT Chatbot UI")
-        print("0. Exit")
+        # Replace the placeholders with the relevant variables or function calls 
+        nginx_status = get_nginx_status()    
+        docker_status = get_docker_status()
+        domain_name = get_domain_name()
+        public_ip = get_ips()
+        total_connections = get_total_connections()
+        active_connections = get_active_connections()
+
+        print("\n┌─────────────────────────────────────────────────────────────┐"
+              f"\n│          Chatbot UI Management Dashboard                     │"
+              f"\n├─────────────────────────────────────────────────────────────┤"
+              f"\n│  1. Nginx Server: {nginx_status:<47} │"
+              f"\n│  2. Docker Image of Chatbot UI: {docker_status:<37} │"
+              f"\n│  3. Domain Name: {domain_name:<49} │"
+              f"\n│  4. Public IP: {public_ip:<50} │"
+              f"\n│  5. Total UI Accesses: {total_connections:<37} │"
+              f"\n│  6. Active UI Accesses: {active_connections:<36} │"
+              f"\n└─────────────────────────────────────────────────────────────┘")
+
+        # Menu
+        print("\nMenu:"
+              "\n1. Update & Upgrade System"
+              "\n2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI"
+              "\n3. Add Nimdys Login Form"
+              "\n4. Remove Nimdys Login Form"
+              "\n42. Check for updates - GPT Chatbot UI"
+              "\n0. Exit")
 
         choice = input("\nEnter your choice: ")
 
