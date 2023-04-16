@@ -8,8 +8,12 @@
 - [ ] Make is sexy
 - [ ] Add ability to load and unload plugins on demand
 
-Currently supports Ubuntu LTS
+Currently supports Ubuntu LTS (havent testing it on other items yet)
 
+## Server Hosting Provided By DigitalOcean
+* https://m.do.co/c/9d2217a2725c
+* Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
+* Free Credits without hacks... 
 
 
 
@@ -26,7 +30,9 @@ My login plugin
 
 Self-Hosted Chatbot UI Installer by McKay Wrigley
 
-This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server. Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
+This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server. 
+
+Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
 
 1. Installs McKay Wrigley's Chatbot UI
 2. Installs Nginx
