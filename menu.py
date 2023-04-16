@@ -566,14 +566,18 @@ def get_nginx_status():
 
 def get_docker_status():
     try:
-        result = subprocess.run(['systemctl', 'is-active', 'docker'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.stdout.strip() == 'active':
-            return 'Running'
+        container_name = 'chatbot-ui_chatgpt'
+        result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        status = result.stdout.strip()
+
+        if status:
+            return status
         else:
-            return 'Stopped'
+            return 'Not Found'
     except Exception as e:
         print(f"Error checking Docker status: {e}")
         return 'Unknown'
+    
 def get_domain_name():
     try:
         return socket.getfqdn()
