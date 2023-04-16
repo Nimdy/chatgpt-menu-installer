@@ -255,6 +255,9 @@ def verify_domain_accessible(domain):
         return False
 
 
+import os
+import subprocess
+
 def setup_ssl_certbot():
     global domain_name
 
@@ -282,8 +285,22 @@ def setup_ssl_certbot():
             print("Please install Certbot before setting up SSL.")
             return
 
-    print("Requesting SSL certificate for the domain...")
-    os.system(f"sudo certbot --nginx -d {domain_name}")
+    # Check if the certificate files exist
+    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
+    if not os.path.exists(cert_path):
+        print(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...")
+        os.system(f"sudo certbot --nginx -d {domain_name}")
+    else:
+        print("Certificate files already exist. Skipping certificate request.")
+
+    # Check if Nginx configuration is valid
+    config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
+    if config_test_result.returncode != 0:
+        print("Nginx configuration test failed. Please fix the issues before proceeding.")
+        print(config_test_result.stderr)
+        return
+    else:
+        print("Nginx configuration test passed.")
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
         print("Setting up automatic certificate renewal...")
