@@ -8,7 +8,7 @@
 
 Currently supports Ubuntu LTS
 
-How it looks:
+
 
 
 ![image](https://user-images.githubusercontent.com/16698453/232345507-fa2c9c9d-69f9-4415-bda3-ec5b6adce580.png)
