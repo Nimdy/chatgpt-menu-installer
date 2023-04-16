@@ -7,7 +7,7 @@ import shutil
 import socket
 import re
 import time
-
+from termcolor import colored
 
 domain_name = None
 
@@ -623,6 +623,28 @@ def get_active_connections():
         print(f"Error retrieving active connection count: {e}")
         return 0
     
+
+def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
+    print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
+    print(colored(f"│          Chatbot UI Management Dashboard                     │", "cyan"))
+    print(colored("├─────────────────────────────────────────────────────────────┤", "cyan"))
+    print(colored(f"│  1. Nginx Server: {nginx_status:<47} │", "magenta"))
+    print(colored(f"│  2. Docker Image of Chatbot UI: {docker_status:<37} │", "magenta"))
+    print(colored(f"│  3. Domain Name: {domain_name:<49} │", "magenta"))
+    print(colored(f"│  4. Public IP: {public_ip:<50} │", "magenta"))
+    print(colored(f"│  5. Total UI Accesses: {total_connections:<37} │", "magenta"))
+    print(colored(f"│  6. Active UI Accesses: {active_connections:<36} │", "magenta"))
+    print(colored("└─────────────────────────────────────────────────────────────┘", "cyan"))
+
+def print_menu():
+    print(colored("\nMenu:", "green"))
+    print(colored("1. Update & Upgrade System", "green"))
+    print(colored("2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI", "green"))
+    print(colored("3. Add Nimdys Login Form", "green"))
+    print(colored("4. Remove Nimdys Login Form", "green"))
+    print(colored("42. Check for updates - GPT Chatbot UI", "green"))
+    print(colored("0. Exit", "green"))
+
 def main():
     load_domain_name_from_file()
     while True:
@@ -634,27 +656,12 @@ def main():
         total_connections = get_total_connections()
         active_connections = get_active_connections()
 
-        print("\n┌─────────────────────────────────────────────────────────────┐"
-              f"\n│          Chatbot UI Management Dashboard                     │"
-              f"\n├─────────────────────────────────────────────────────────────┤"
-              f"\n│  1. Nginx Server: {nginx_status:<47} │"
-              f"\n│  2. Docker Image of Chatbot UI: {docker_status:<37} │"
-              f"\n│  3. Domain Name: {domain_name:<49} │"
-              f"\n│  4. Public IP: {public_ip:<50} │"
-              f"\n│  5. Total UI Accesses: {total_connections:<37} │"
-              f"\n│  6. Active UI Accesses: {active_connections:<36} │"
-              f"\n└─────────────────────────────────────────────────────────────┘")
+        print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
 
         # Menu
-        print("\nMenu:"
-              "\n1. Update & Upgrade System"
-              "\n2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI"
-              "\n3. Add Nimdys Login Form"
-              "\n4. Remove Nimdys Login Form"
-              "\n42. Check for updates - GPT Chatbot UI"
-              "\n0. Exit")
+        print_menu()
 
-        choice = input("\nEnter your choice: ")
+        choice = input(colored("\nEnter your choice: ", "yellow"))
 
         if choice == "1":
             update_and_upgrade_system()
@@ -671,10 +678,9 @@ def main():
         elif choice == "42":
             update_gpt_chatbot_ui()
         elif choice == "0":
-            print("Exiting... Close the Terminal to exit the script.")
+            print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
         else:
-            print("Invalid choice, please try again.")
-
+            print(colored("Invalid choice, please try again.", "red"))
 if __name__ == "__main__":
     main()
