@@ -419,6 +419,45 @@ def setup_gpt_chatbot_ui():
 
     print("GPT Chatbot UI setup completed.")
 
+
+def update_gpt_chatbot_ui():
+    print("Checking for updates in GPT Chatbot UI...")
+
+    # Step 1: Change back to the user directory
+    os.chdir(os.path.expanduser("~"))
+
+    # Step 2: Check if the chatbot-ui directory exists
+    if not os.path.exists("chatbot-ui"):
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
+    os.chdir("chatbot-ui")
+
+    # Step 3: Fetch updates from the remote repository
+    os.system("git fetch")
+
+    # Step 4: Check if there are updates available
+    updates_available = os.system("git diff --quiet origin/main")
+    if updates_available != 0:
+        print("Updates are available.")
+        if get_user_response("Do you want to update GPT Chatbot UI? (y/n): "):
+            # Step 5: Pull updates from the remote repository
+            os.system("git pull")
+
+            # Step 6: Shut down the old Docker image
+            print("Shutting down the old Docker image...")
+            os.system("docker-compose down")
+
+            # Step 7: Create a new Docker image based on the updated docker-compose.yml file
+            print("Creating a new Docker image...")
+            os.system("docker-compose up -d")
+
+            print("GPT Chatbot UI update completed.")
+        else:
+            print("Update canceled.")
+    else:
+        print("GPT Chatbot UI is already up to date.")
+
 def download_file(url, local_path):
     response = requests.get(url)
     with open(local_path, "wb") as f:
@@ -504,6 +543,7 @@ def main():
         print("2. Install Docker, Docker Compose, and Git, Configure Nginx, and Setup SSL with Certbot, and Setup GPT Chatbot UI")
         print("3. Add Nimdys Login Form")
         print("4. Remove Nimdys Login Form")
+        print("42. Check for updates - GPT Chatbot UI")
         print("0. Exit")
 
         choice = input("\nEnter your choice: ")
@@ -520,6 +560,8 @@ def main():
             add_nimdys_login_form()
         elif choice == "4":
             remove_nimdys_login_form()
+        elif choice == "42":
+            update_gpt_chatbot_ui()
         elif choice == "0":
             print("Exiting... Close the Terminal to exit the script.")
             break
