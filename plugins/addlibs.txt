@@ -1,5 +1,1 @@
-"formik": "^2.2.9",
-"js-cookie": "^3.0.1",
-
---dev
-"@types/js-cookie": "^3.0.3",
+npm install formik@^2.2.9 js-cookie@^3.0.1 && npm install @types/js-cookie@^3.0.3 --save-dev
