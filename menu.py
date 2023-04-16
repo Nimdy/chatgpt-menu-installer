@@ -626,14 +626,14 @@ def get_active_connections():
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
-    print(colored(f"│          Chatbot UI Management Dashboard                     │", "cyan"))
+    print(colored(f"│          Chatbot UI Management Dashboard                    │", "cyan"))
     print(colored("├─────────────────────────────────────────────────────────────┤", "cyan"))
-    print(colored(f"│  1. Nginx Server: {nginx_status:<47} │", "magenta"))
-    print(colored(f"│  2. Docker Image of Chatbot UI: {docker_status:<37} │", "magenta"))
-    print(colored(f"│  3. Domain Name: {domain_name:<49} │", "magenta"))
-    print(colored(f"│  4. Public IP: {public_ip:<50} │", "magenta"))
-    print(colored(f"│  5. Total UI Accesses: {total_connections:<37} │", "magenta"))
-    print(colored(f"│  6. Active UI Accesses: {active_connections:<36} │", "magenta"))
+    print(colored(f"│  1. Nginx Server: {nginx_status}", "magenta"))
+    print(colored(f"│  2. Docker Image of Chatbot UI: {docker_status}", "magenta"))
+    print(colored(f"│  3. Domain Name: {domain_name}", "magenta"))
+    print(colored(f"│  4. Public IP: {public_ip}", "magenta"))
+    print(colored(f"│  5. Total UI Accesses: {total_connections}", "magenta"))
+    print(colored(f"│  6. Active UI Accesses: {active_connections}", "magenta"))
     print(colored("└─────────────────────────────────────────────────────────────┘", "cyan"))
 
 def print_menu():
