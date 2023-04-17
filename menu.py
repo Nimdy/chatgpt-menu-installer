@@ -143,7 +143,7 @@ def step1_update_and_upgrade_system(bottom_win):
     print(colored("Please reboot the system to apply the changes.", "green"))
     print(colored("After rebooting, run this script again to continue with menu option 2.", "green"))
 
-def create_new_user():
+def create_new_user(bottom_win):
     while True:
         new_username = input(colored("Enter a new username: ", "yellow")).strip()
         if not new_username:
@@ -172,7 +172,7 @@ def create_new_user():
     print(colored(f"User {new_username} created with sudo permissions.", "green"))
     return new_username
 
-def check_nginx_running():
+def check_nginx_running(bottom_win):
     try:
         output = subprocess.check_output("systemctl is-active nginx", shell=True)
         return output.strip().decode("utf-8") == "active"
@@ -297,14 +297,14 @@ server {{
         else:
             print("SSL setup with Certbot skipped.")
 
-def is_certbot_installed():
+def is_certbot_installed(bottom_win):
     try:
         subprocess.check_output("which certbot", shell=True)
         return True
     except subprocess.CalledProcessError:
         return False
 
-def is_nginx_running():
+def is_nginx_running(bottom_win):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1)
@@ -313,7 +313,7 @@ def is_nginx_running():
     except (socket.timeout, socket.error) as e:
         return False
 
-def verify_domain_accessible(domain):
+def verify_domain_accessible(domain, bottom_win):
     try:
         response = requests.get(f"http://{domain}")
         return response.status_code == 200
@@ -480,12 +480,12 @@ def step4_install_docker_docker_compose_git(bottom_win):
 
     print("Installation of Docker, Docker Compose, and Git completed.")
 
-def check_docker_group_membership():
+def check_docker_group_membership(bottom_win):
     user = getpass.getuser()
     group_members = grp.getgrnam("docker").gr_mem
     return user in group_members
 
-def add_user_to_docker_group():
+def add_user_to_docker_group(bottom_win):
     user = getpass.getuser()
     os.system(f"sudo usermod -aG docker {user}")
     print(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.")
