@@ -95,9 +95,6 @@ def main_installation_function():
         # Remove the progress file once the installation is complete
         os.remove(progress_filename)
 
-main_installation_function()
-
-
 def save_domain_name_to_file():
     with open("domain_name.txt", "w") as f:
         f.write(domain_name)
