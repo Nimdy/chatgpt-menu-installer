@@ -1,4 +1,4 @@
-# THIS IS NOT READY YET! DO NOT USE... Thanks ;)
+# THIS IS NOT RELEASE READY YET! USE for testing only... Thanks ;)
 
 **To-Do:**
 
