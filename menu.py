@@ -799,7 +799,11 @@ def check_dependency_status():
         if dependency == "chatbot-ui":
             status = os.path.exists(command)
         else:
-            status = os.system(f"{command} > /dev/null 2>&1") == 0
+            try:
+                subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+                status = True
+            except subprocess.CalledProcessError:
+                status = False
 
         if status:
             print("\033[92m✔\033[0m")  # Green checkmark
