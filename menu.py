@@ -855,10 +855,7 @@ def main():
         if choice == "1":
             step1_update_and_upgrade_system()
         elif choice == "2":
-            step2_configure_nginx()
-            step3_setup_ssl_certbot()
-            step4_install_docker_docker_compose_git()
-            step5_setup_gpt_chatbot_ui()
+            main_installation_function()
         elif choice == "3":
             add_nimdys_login_form()
         elif choice == "4":
