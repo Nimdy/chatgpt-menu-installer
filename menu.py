@@ -781,6 +781,32 @@ def get_active_connections():
         print(f"Error retrieving active connection count: {e}")
         return 0
     
+def check_dependency_status():
+    dependencies = {
+        "git": "git --version",
+        "docker": "docker --version",
+        "docker-compose": "docker-compose --version",
+        "nginx": "nginx -v",
+        "certbot": "certbot --version",
+        "chatbot-ui": os.path.expanduser("~") + "/chatbot-ui",
+    }
+    
+    print("Checking dependencies...\n")
+
+    for dependency, command in dependencies.items():
+        print(f"Checking {dependency}... ", end="")
+
+        if dependency == "chatbot-ui":
+            status = os.path.exists(command)
+        else:
+            status = os.system(f"{command} > /dev/null 2>&1") == 0
+
+        if status:
+            print("\033[92m✔\033[0m")  # Green checkmark
+        else:
+            print("\033[91m✘\033[0m")  # Red cross
+
+    print("\nDependency check completed.")
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
@@ -800,6 +826,7 @@ def print_menu():
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Add Nimdys Login Form", "green"))
     print(colored("4. Remove Nimdys Login Form", "green"))
+    print(colored("5. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
     print(colored("0. Exit", "green"))
 
@@ -832,6 +859,8 @@ def main():
             add_nimdys_login_form()
         elif choice == "4":
             remove_nimdys_login_form()
+        elif choice == "5":
+            check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
         elif choice == "0":
