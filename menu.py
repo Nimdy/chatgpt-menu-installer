@@ -232,6 +232,9 @@ def configure_nginx():
         if not get_user_response("Do you want to continue with the configuration? (y/n): "):
             print("Aborted Nginx configuration.")
             return
+        
+    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
+    key_path = f"/etc/letsencrypt/live/{domain_name}/privkey.pem"
 
     if os.path.exists(cert_path) and os.path.exists(key_path):
         print(f"SSL certificate files for {domain_name} already exist.")
@@ -245,10 +248,7 @@ def configure_nginx():
             setup_ssl_certbot()
         else:
             print("Skipping SSL-related configuration due to missing requirements or some other error.")
-            
-    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
-    key_path = f"/etc/letsencrypt/live/{domain_name}/privkey.pem"
-
+    
     nginx_config = f"""
 server {{
     listen 80;
