@@ -129,7 +129,7 @@ def safe_system_call(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
-def step1_update_and_upgrade_system():
+def step1_update_and_upgrade_system(bottom_win):
     print(colored("Updating the package list...", "cyan"))
     os.system("sudo apt-get update")
 
@@ -172,7 +172,6 @@ def create_new_user():
     print(colored(f"User {new_username} created with sudo permissions.", "green"))
     return new_username
 
-
 def check_nginx_running():
     try:
         output = subprocess.check_output("systemctl is-active nginx", shell=True)
@@ -189,7 +188,7 @@ def is_domain_publicly_visible(domain_name):
         print(f"Error: {e}")
         return False, None
 
-def step2_configure_nginx():
+def step2_configure_nginx(bottom_win):
     global domain_name
     print("Configuring Nginx...")
 
@@ -321,7 +320,7 @@ def verify_domain_accessible(domain):
     except requests.exceptions.RequestException:
         return False
 
-def step3_setup_ssl_certbot():
+def step3_setup_ssl_certbot(bottom_win):
     global domain_name
 
     load_domain_name_from_file()
@@ -373,7 +372,7 @@ def step3_setup_ssl_certbot():
 
     print("SSL setup with Certbot completed.")
 
-def step4_install_docker_docker_compose_git():
+def step4_install_docker_docker_compose_git(bottom_win):
     print(colored("Installing Docker, Docker Compose, and Git...", "cyan"))
 
     print(colored("Installing Git...", "cyan"))
@@ -481,7 +480,6 @@ def step4_install_docker_docker_compose_git():
 
     print("Installation of Docker, Docker Compose, and Git completed.")
 
-
 def check_docker_group_membership():
     user = getpass.getuser()
     group_members = grp.getgrnam("docker").gr_mem
@@ -492,9 +490,7 @@ def add_user_to_docker_group():
     os.system(f"sudo usermod -aG docker {user}")
     print(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.")
 
-
-
-def step5_setup_gpt_chatbot_ui():
+def step5_setup_gpt_chatbot_ui(bottom_win):
     print("Setting up GPT Chatbot UI...")
 
     # Step 1: Change to the appropriate directory
@@ -703,7 +699,6 @@ def add_nimdys_login_form():
 
     print("Nimdys login form added.")
 
-
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
@@ -741,9 +736,6 @@ def remove_nimdys_login_form():
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
-
-
-# Menu Header Functions for the Chatbot UI Management Dashboard
 
 def get_nginx_status():
     try:
