@@ -42,9 +42,6 @@ def main_installation_function():
 
     # Initialize curses
     stdscr = curses.initscr()
-    curses.start_color()  # Move this line after initscr()
-    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
@@ -113,7 +110,7 @@ def load_domain_name_from_file():
 
 def get_user_response(prompt, bottom_win):
     while True:
-        bottom_win.addstr(prompt, curses.color_pair(1))
+        bottom_win.addstr(prompt)
         bottom_win.refresh()
         response = bottom_win.getstr().strip().decode("utf-8").lower()
 
@@ -122,8 +119,9 @@ def get_user_response(prompt, bottom_win):
             bottom_win.refresh()
             return response == 'y'
         else:
-            bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n", curses.color_pair(2))
+            bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n")
             bottom_win.refresh()
+
 
 
 def safe_system_call(cmd):
