@@ -26,9 +26,6 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def main_installation_function():
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     progress_filename = "installation_progress.txt"
     saved_step = read_progress_file(progress_filename)
 
@@ -45,6 +42,9 @@ def main_installation_function():
 
     # Initialize curses
     stdscr = curses.initscr()
+    curses.start_color()  # Move this line after initscr()
+    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
