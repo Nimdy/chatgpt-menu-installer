@@ -420,8 +420,11 @@ def add_user_to_docker_group():
 def setup_gpt_chatbot_ui():
     print("Setting up GPT Chatbot UI...")
 
-    # Step 1: Change back to the user directory
-    os.chdir(os.path.expanduser("~"))
+    # Step 1: Change to the appropriate directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
 
     # Step 2: Download the GitHub repo
     os.system("git clone https://github.com/mckaywrigley/chatbot-ui.git")
@@ -476,7 +479,6 @@ def setup_gpt_chatbot_ui():
             with open(".env.local", "w") as f:
                 for key, value in env_vars.items():
                     f.write(f"{key}={value}\n")
-
 
     # Test the docker-compose
     print("Testing the docker-compose...")
@@ -558,15 +560,31 @@ def add_nimdys_login_form():
         print("Aborted adding Nimdys login form.")
         return
 
+    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
+    chatbot_ui_path = None
+    user_home_dir = os.path.expanduser("~")
+    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
     # Download and add LoginForm.tsx to chatbot-ui/Settings/
-    shutil.copy("chatbot-ui/Settings/LoginForm.tsx", "chatbot-ui/Settings/LoginForm.tsx.bak")
+    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
+                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
     download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
-                  "chatbot-ui/Settings/LoginForm.tsx")
+                  os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
 
     # Download and replace _app.tsx in chatbot-ui/pages/
-    shutil.copy("chatbot-ui/pages/_app.tsx", "chatbot-ui/pages/_app.tsx.bak")
+    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
+                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
     download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
-                  "chatbot-ui/pages/_app.tsx")
+                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
 
     # Execute the commands in addlibs.txt
     response = requests.get("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/addlibs.txt")
@@ -595,12 +613,12 @@ def add_nimdys_login_form():
             break
 
     # Save and overwrite the vars in the .env.local file
-    with open("chatbot-ui/.env.local", "a") as f:
+    with open(os.path.join(chatbot_ui_path, ".env.local"), "a") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
 
     # Check if .env.production file exists, create it if not, and add the vars
-    env_production_file = "chatbot-ui/.env.production"
+    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
     if not os.path.exists(env_production_file):
         with open(env_production_file, "w") as f:
             for key, value in env_vars.items():
@@ -617,22 +635,35 @@ def remove_nimdys_login_form():
         print("Aborted removing Nimdys login form.")
         return
 
+    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
+    chatbot_ui_path = None
+    user_home_dir = os.path.expanduser("~")
+    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
     # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
-    login_form_backup = "chatbot-ui/Settings/LoginForm.tsx.bak"
+    login_form_backup = os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak")
     if os.path.exists(login_form_backup):
-        shutil.move(login_form_backup, "chatbot-ui/Settings/LoginForm.tsx")
+        shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
     else:
         print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
 
     # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
-    app_tsx_backup = "chatbot-ui/pages/_app.tsx.bak"
+    app_tsx_backup = os.path.join(chatbot_ui_path, "pages/_app.tsx.bak")
     if os.path.exists(app_tsx_backup):
-        shutil.move(app_tsx_backup, "chatbot-ui/pages/_app.tsx")
+        shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
     else:
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
-
 
 
 # Menu Header Functions for the Chatbot UI Management Dashboard
