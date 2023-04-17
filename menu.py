@@ -43,10 +43,10 @@ def main_installation_function():
         if saved_step > 0:
             bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
             bottom_win.refresh()
-            response = get_user_response("Do you want to continue from the saved step? (y/n): ")
+            response = get_user_response("Do you want to continue from the saved step? (y/n): ", bottom_win)
 
             if not response:
-                response = get_user_response("Do you want to start with a fresh install? (y/n): ")
+                response = get_user_response("Do you want to start with a fresh install? (y/n): ", bottom_win)
                 if not response:
                     bottom_win.addstr("Aborted installation.\n")
                     bottom_win.refresh()
@@ -97,7 +97,7 @@ def main_installation_function():
     # Remove the progress file once the installation is complete
     if os.path.exists(progress_filename):
         os.remove(progress_filename)
-        
+
 def save_domain_name_to_file():
     with open("domain_name.txt", "w") as f:
         f.write(domain_name)
