@@ -1,38 +1,101 @@
-# THIS IS NOT RELEASE READY YET! USE for testing only... Thanks ;)
+# Self-Hosted Chatbot UI Installer
+
+Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
+
+This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server.
+
+Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
+
+## Features
+- Installs McKay Wrigley's Chatbot UI
+- Installs and configures Nginx
+- Installs and configures Certbot
+- Installs and configures Docker and Docker Compose
+- Installs Custom Login Form on demand
+- Removes Custom Login Form on demand
+- Configures environment variables
+- Checks for updates to McKay Wrigley's Chatbot UI and applies them
+- Launches Chatbot UI
 
 **To-Do:**
 
 - [X] Complete Seperate Function Files
 - [X] Take all function files and combine them into one menu
-- [ ] Validate stuff works
-- [ ] Make is sexy
+- [ ] Validate functionality
+- [ ] Improve user interface design
 - [ ] Add ability to load and unload plugins on demand
 
-Currently supports Ubuntu LTS (havent testing it on other items yet)
+## Compatibility
+
+Currently supports Ubuntu LTS (testing on other platforms is pending).
 
 ## Server Hosting Provided By DigitalOcean
-* https://m.do.co/c/9d2217a2725c
-* Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
-* Free Credits without hacks... 
 
-## If using a blank clean VPS, please make a non-root user first
+- https://m.do.co/c/9d2217a2725c
+- Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
+- Free Credits without hacks... 
 
-1.
+## Initial Setup for a Blank VPS
+
+If you are using a blank VPS, please create a non-root user first:
+
+1. Create a new user:
 ```
 sudo adduser UserNameYouWant
 ```
-2.
+
+2. Add the new user to the sudo group:
 ```
 usermod -aG sudo UserNameYouWant
 ```
-3.
+
+3. Edit the sudoers file:
 ```
 visudo
-
-add:
+``
+Add the following line:
+```
 UserNameYouWant ALL=(ALL:ALL) ALL
 ```
-4. Safe file and continue
+
+4. Save file and continue
+
+
+## Installation Steps
+
+1. Update the package list:
+```
+sudo apt update
+```
+
+2. Upgrade installed packages:
+```
+sudo apt upgrade
+```
+
+
+3. Install Python 3:
+```
+sudo apt install python3
+```
+
+4. Install pip for Python 3:
+```
+sudo apt install python3-pip
+```
+
+5. Install required Python packages:
+```
+pip3 install -r requirements.txt
+```
+
+## Start Menu
+To start the installation menu, run the following command:
+```
+python3 menu.py
+```
+
+
 
 
 ![image](https://user-images.githubusercontent.com/16698453/232345507-fa2c9c9d-69f9-4415-bda3-ec5b6adce580.png)
@@ -44,50 +107,5 @@ My login plugin
 
 ![image](https://user-images.githubusercontent.com/16698453/232345653-6792b639-0652-4cd1-8d27-5e8dd9affaba.png)
 
-
-
-Self-Hosted Chatbot UI Installer by McKay Wrigley
-
-This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server. 
-
-Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
-
-1. Installs McKay Wrigley's Chatbot UI
-2. Installs Nginx
-3. Configures Nginx
-4. Installs Certbot
-5. Configures Certbot
-6. Installs Docker and Docker Compose
-7. Configures Docker and Docker Compose
-8. Installs Custom Login Form on demand
-9. Remove Custom Login Form on demand
-10. Configures envorimental variables:
-11. Checks McKay Wrigley's Chatbot UI for updates and updates it.
-```
-OPENAI_API_KEY if no input leave var blank
-OPENAI_API_HOST if no input enter https://api.openai.com
-OPENAI_API_TYPE if no input enter openai
-OPENAI_API_VERSION if not input enter 2023-03-15-preview
-AZURE_DEPLOYMENT_ID if no input leave var blank
-OPENAI_ORGANIZATION if no input leave var blank
-DEFAULT_MODEL if no input enter gpt-3.5-turbo	
-NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT if not input enter You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown.
-GOOGLE_API_KEY if no input leave var blank
-GOOGLE_CSE_ID if no input leave var blank
-```
-11. Launches Chatbot UI
-
-
-This installer simplifies the process of setting up your self-hosted chatbot UI, making it easier and more efficient.
-
-
-# Setups for Installation:
-1. sudo apt update
-2. sudo apt upgrade
-3. sudo apt install python3
-4. sudo apt install python3-pip
-5. pip3 install -r requirements.txt
-
-# Start Menu
-
-1. python3 menu.py
+## Disclaimer
+This project is currently in development and is intended for testing purposes only. Please use caution when using it on a production server. The project currently supports Ubuntu LTS, and testing on other platforms is pending.
