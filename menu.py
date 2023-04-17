@@ -30,13 +30,16 @@ def main_installation_function():
     saved_step = read_progress_file(progress_filename)
 
     if saved_step > 0:
-        print(f"Continuing installation from step {saved_step}.")
+        bottom_win.addstr(f"Continuing installation from step {saved_step}.")
+        bottom_win.refresh()
         response = get_user_response("Do you want to continue from the saved step? (y/n): ")
 
         if not response:
             response = get_user_response("Do you want to start with a fresh install? (y/n): ")
             if not response:
-                print("Aborted installation.")
+                bottom_win.addstr("Aborted installation.")
+                bottom_win.refresh()
+
                 return
             saved_step = 0
 
