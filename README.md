@@ -77,21 +77,37 @@ sudo apt update
 sudo apt upgrade
 ```
 
+3. Reboot System
+```
+sudo reboot
+```
 
-3. Install Python 3:
+4. Install Python 3:
 ```
 sudo apt install python3
 ```
 
-4. Install pip for Python 3:
+5. Install pip for Python 3:
 ```
 sudo apt install python3-pip
 ```
 
-5. Install required Python packages:
+6. Clone this repo
+```
+git clone https://github.com/Nimdy/chatgpt-menu-installer.git
+```
+
+7. Change into the new cloned repo director.
+```
+cd chatgpt-menu-installer
+```
+
+8. Install required Python packages:
 ```
 pip3 install -r requirements.txt
 ```
+
+## Now you are ready to start the menu. Time to go for a ride! 
 
 ## Start Menu
 To start the installation menu, run the following command:
