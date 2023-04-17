@@ -10,6 +10,7 @@ import time
 import tempfile
 import getpass
 import grp
+import curses
 from termcolor import colored
 
 domain_name = None
@@ -39,30 +40,62 @@ def main_installation_function():
                 return
             saved_step = 0
 
-    if saved_step < 1:
-        step1_update_and_upgrade_system()
-        update_progress_file(progress_filename, 1)
+    # Initialize curses
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
 
-    if saved_step < 2:
-        step2_configure_nginx()
-        update_progress_file(progress_filename, 2)
+    try:
+        # Divide the screen into two parts
+        top_win = curses.newwin(5, curses.COLS, 0, 0)
+        bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
 
-    if saved_step < 3:
-        step3_setup_ssl_certbot()
-        update_progress_file(progress_filename, 3)
+        def update_step_status(step):
+            top_win.clear()
+            for i in range(1, step):
+                top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
+            top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
+            top_win.refresh()
 
-    if saved_step < 4:
-        step4_install_docker_docker_compose_git()
-        update_progress_file(progress_filename, 3)
+        if saved_step < 1:
+            update_step_status(1)
+            step1_update_and_upgrade_system()
+            update_progress_file(progress_filename, 1)
 
-    if saved_step < 5:
-        step5_setup_gpt_chatbot_ui()
-        update_progress_file(progress_filename, 3)
+        if saved_step < 2:
+            update_step_status(2)
+            step2_configure_nginx()
+            update_progress_file(progress_filename, 2)
 
-    # Add more steps as needed
+        if saved_step < 3:
+            update_step_status(3)
+            step3_setup_ssl_certbot()
+            update_progress_file(progress_filename, 3)
 
-    # Remove the progress file once the installation is complete
-    os.remove(progress_filename)
+        if saved_step < 4:
+            update_step_status(4)
+            step4_install_docker_docker_compose_git()
+            update_progress_file(progress_filename, 4)
+
+        if saved_step < 5:
+            update_step_status(5)
+            step5_setup_gpt_chatbot_ui()
+            update_progress_file(progress_filename, 5)
+
+        # Add more steps as needed if you want to customize the installation process
+
+    finally:
+        # Clean up curses
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+        # Remove the progress file once the installation is complete
+        os.remove(progress_filename)
+
+main_installation_function()
 
 
 def save_domain_name_to_file():
@@ -176,7 +209,6 @@ def step2_configure_nginx():
     else:
         print(f"The domain name {domain_name} is publicly visible and resolves to IP address {ip_address}.")
         save_domain_name_to_file()
-
 
     if not domain_visible:
         if not get_user_response("Do you want to continue with the configuration? (y/n): "):
