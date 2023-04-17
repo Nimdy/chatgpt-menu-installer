@@ -6,6 +6,10 @@ This comprehensive menu-based installer is designed for individuals who wish to 
 
 Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
 
+## Why not SHORTER COMMANDS>?!?!?!
+
+Like all of my menu-based installers, this one includes additional steps that could potentially be condensed into one-liner commands. However, my intention in designing these installers is to assist individuals who are new to Linux and are in the process of learning. By providing a more detailed and step-by-step approach, I aim to help users understand the correct procedures before introducing them to shortcuts. I appreciate your understanding and kindness as you use this installer. :)
+
 ## Features
 - Installs McKay Wrigley's Chatbot UI
 - Installs and configures Nginx
