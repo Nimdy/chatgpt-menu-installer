@@ -35,7 +35,7 @@ Currently supports Ubuntu LTS (testing on other platforms is pending).
 - Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
 - Free Credits without hacks... 
 
-## Initial Setup for a Blank VPS
+## Initial Setup for a Blank VPS Pre-Pre Setup
 
 If you are using a blank VPS, please create a non-root user first:
 
@@ -52,8 +52,8 @@ usermod -aG sudo UserNameYouWant
 3. Edit the sudoers file:
 ```
 visudo
-``
-Add the following line:
+```
+- Add the following line:
 ```
 UserNameYouWant ALL=(ALL:ALL) ALL
 ```
