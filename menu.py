@@ -26,6 +26,9 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def main_installation_function():
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     progress_filename = "installation_progress.txt"
     saved_step = read_progress_file(progress_filename)
 
@@ -60,27 +63,27 @@ def main_installation_function():
 
         if saved_step < 1:
             update_step_status(1)
-            step1_update_and_upgrade_system()
+            step1_update_and_upgrade_system(bottom_win)
             update_progress_file(progress_filename, 1)
 
         if saved_step < 2:
             update_step_status(2)
-            step2_configure_nginx()
+            step2_configure_nginx(bottom_win)
             update_progress_file(progress_filename, 2)
 
         if saved_step < 3:
             update_step_status(3)
-            step3_setup_ssl_certbot()
+            step3_setup_ssl_certbot(bottom_win)
             update_progress_file(progress_filename, 3)
 
         if saved_step < 4:
             update_step_status(4)
-            step4_install_docker_docker_compose_git()
+            step4_install_docker_docker_compose_git(bottom_win)
             update_progress_file(progress_filename, 4)
 
         if saved_step < 5:
             update_step_status(5)
-            step5_setup_gpt_chatbot_ui()
+            step5_setup_gpt_chatbot_ui(bottom_win)
             update_progress_file(progress_filename, 5)
 
         # Add more steps as needed if you want to customize the installation process
@@ -108,13 +111,20 @@ def load_domain_name_from_file():
     except FileNotFoundError:
         print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
 
-def get_user_response(prompt):
+def get_user_response(prompt, bottom_win):
     while True:
-        response = input(colored(prompt, "yellow")).strip().lower()
+        bottom_win.addstr(prompt, curses.color_pair(1))
+        bottom_win.refresh()
+        response = bottom_win.getstr().strip().decode("utf-8").lower()
+
         if response in ['y', 'n']:
+            bottom_win.addstr("\n")
+            bottom_win.refresh()
             return response == 'y'
         else:
-            print(colored("Invalid input. Please enter 'y' or 'n'.", "red"))
+            bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n", curses.color_pair(2))
+            bottom_win.refresh()
+
 
 def safe_system_call(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
