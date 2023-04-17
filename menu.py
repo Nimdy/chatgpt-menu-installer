@@ -8,6 +8,8 @@ import socket
 import re
 import time
 import tempfile
+import getpass
+import grp
 from termcolor import colored
 
 domain_name = None
@@ -403,6 +405,18 @@ def setup_ssl_certbot():
     print("SSL setup with Certbot completed.")
 
 
+def check_docker_group_membership():
+    user = getpass.getuser()
+    group_members = grp.getgrnam("docker").gr_mem
+    return user in group_members
+
+def add_user_to_docker_group():
+    user = getpass.getuser()
+    os.system(f"sudo usermod -aG docker {user}")
+    print(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.")
+
+
+
 def setup_gpt_chatbot_ui():
     print("Setting up GPT Chatbot UI...")
 
@@ -420,7 +434,6 @@ def setup_gpt_chatbot_ui():
         shutil.move(".env.local.example", ".env.local")
     else:
         print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.")
-
 
     # Step 5: Ask the user for input based on the following VARS
     env_vars = {
@@ -464,12 +477,24 @@ def setup_gpt_chatbot_ui():
                 for key, value in env_vars.items():
                     f.write(f"{key}={value}\n")
 
+
     # Test the docker-compose
     print("Testing the docker-compose...")
     test_result = os.system("docker-compose config")
     if test_result != 0:
         print("There are errors in the docker-compose configuration. Please fix them before proceeding.")
         return
+
+    # Check if the user is part of the Docker group
+    if not check_docker_group_membership():
+        print("You need to be a member of the 'docker' group to start the services.")
+        user_input = input("Do you want to be added to the 'docker' group? (y/n): ")
+        if user_input.lower() == "y":
+            add_user_to_docker_group()
+            print("Please log out and log back in, and then run the script again to start the services.")
+            return
+        else:
+            print("You will need to add yourself to the 'docker' group manually to start the services.")
 
     # Ask the user if they wish to start the services
     user_input = input("Do you want to start the services? (y/n): ")
@@ -481,7 +506,6 @@ def setup_gpt_chatbot_ui():
         print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.")
 
     print("GPT Chatbot UI setup completed.")
-
 
 def update_gpt_chatbot_ui():
     print("Checking for updates in GPT Chatbot UI...")
