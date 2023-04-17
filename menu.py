@@ -232,9 +232,6 @@ def configure_nginx():
         if not get_user_response("Do you want to continue with the configuration? (y/n): "):
             print("Aborted Nginx configuration.")
             return
-        
-    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
-    key_path = f"/etc/letsencrypt/live/{domain_name}/privkey.pem"
 
     if os.path.exists(cert_path) and os.path.exists(key_path):
         print(f"SSL certificate files for {domain_name} already exist.")
@@ -248,7 +245,10 @@ def configure_nginx():
             setup_ssl_certbot()
         else:
             print("Skipping SSL-related configuration due to missing requirements or some other error.")
-      
+            
+    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
+    key_path = f"/etc/letsencrypt/live/{domain_name}/privkey.pem"
+
     nginx_config = f"""
 server {{
     listen 80;
@@ -268,8 +268,8 @@ server {{
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name {domain_name};
-    ssl_certificate /etc/letsencrypt/live/{domain_name}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{domain_name}/privkey.pem;
+    ssl_certificate {cert_path};
+    ssl_certificate_key {key_path};
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
     ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
     location / {{
@@ -283,6 +283,8 @@ server {{
     }}
 }}
     """
+
+
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
         if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): "):
