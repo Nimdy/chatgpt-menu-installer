@@ -123,8 +123,6 @@ def get_user_response(prompt, bottom_win):
             bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n")
             bottom_win.refresh()
 
-
-
 def safe_system_call(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
@@ -190,34 +188,42 @@ def is_domain_publicly_visible(domain_name):
 
 def step2_configure_nginx(bottom_win):
     global domain_name
-    print("Configuring Nginx...")
+    bottom_win.addstr("Configuring Nginx...\n")
+    bottom_win.refresh()
 
-    if not check_nginx_running():
+    if not check_nginx_running(bottom_win):
         if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): "):
-            print("Installing Nginx...")
+            bottom_win.addstr("Installing Nginx...\n")
+            bottom_win.refresh()
             os.system("sudo apt-get install -y nginx")
-            print("Starting Nginx...")
+            bottom_win.addstr("Starting Nginx...\n")
+            bottom_win.refresh()
             os.system("sudo systemctl start nginx")
         else:
-            print("Please install and start Nginx before configuring.")
+            bottom_win.addstr("Please install and start Nginx before configuring.\n")
+            bottom_win.refresh()
             return
 
     if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): "):
-        print("Aborted Nginx configuration.")
+        bottom_win.addstr("Aborted Nginx configuration.\n")
+        bottom_win.refresh()
         return
 
     domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
 
-    domain_visible, ip_address = is_domain_publicly_visible(domain_name)
+    domain_visible, ip_address = is_domain_publicly_visible(domain_name, bottom_win)
     if not domain_visible:
-        print(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.")
+        bottom_win.addstr(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.\n")
+        bottom_win.refresh()
     else:
-        print(f"The domain name {domain_name} is publicly visible and resolves to IP address {ip_address}.")
-        save_domain_name_to_file()
+        bottom_win.addstr(f"The domain name {domain_name} is publicly visible and resolves to IP address {ip_address}.\n")
+        bottom_win.refresh()
+        save_domain_name_to_file(bottom_win)
 
     if not domain_visible:
         if not get_user_response("Do you want to continue with the configuration? (y/n): "):
-            print("Aborted Nginx configuration.")
+            bottom_win.addstr("Aborted Nginx configuration.\n")
+            bottom_win.refresh()
             return
  
     nginx_config = f"""
@@ -256,7 +262,8 @@ server {{
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
         if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): "):
-            print("Aborted Nginx configuration.")
+            bottom_win.addstr("Aborted Nginx configuration.\n")
+            bottom_win.refresh()
             return
 
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
@@ -269,7 +276,9 @@ server {{
     os.system(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
     is_successful, _, error = safe_system_call("sudo nginx -t")
     if not is_successful:
-        print("Error: Nginx configuration test failed.")
+        bottom_win.addstr("Error: Nginx configuration test failed.\n")
+        bottom_win.addstr(error + "\n")
+        bottom_win.refresh()     
         print(error)
         return
 
@@ -277,25 +286,31 @@ server {{
         is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
 
         if is_successful:
-            print("Nginx restarted with the new configuration.")
+            bottom_win.addstr("Nginx restarted with the new configuration.\n")
+            bottom_win.refresh()
         else:
-            print("Job for nginx.service failed because the control process exited with error code.")
+            bottom_win.addstr("Job for nginx.service failed because the control process exited with error code.\n")
+            bottom_win.refresh()
             _, status_output, _ = safe_system_call("systemctl status nginx.service")
-            print("Output of 'systemctl status nginx.service':")
-            print(status_output)
+            bottom_win.addstr("Output of 'systemctl status nginx.service':\n")
+            bottom_win.addstr(status_output + "\n")
+            bottom_win.refresh()
             _, journal_output, _ = safe_system_call("journalctl -xe")
-            print("Output of 'journalctl -xe':")
-            print(journal_output)
+            bottom_win.addstr("Output of 'journalctl -xe':\n")
+            bottom_win.addstr(journal_output + "\n")
+            bottom_win.refresh()
 
     else:
-        print("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.")
+        bottom_win.addstr("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.\n")
+        bottom_win.refresh()
 
     if is_certbot_installed():
         print("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): ")
         if get_user_response("Do you want to set up SSL with Certbot? (y/n): "):
             step3_setup_ssl_certbot()
         else:
-            print("SSL setup with Certbot skipped.")
+            bottom_win.addstr("SSL setup with Certbot skipped.\n")
+            bottom_win.refresh()
 
 def is_certbot_installed(bottom_win):
     try:
@@ -326,51 +341,64 @@ def step3_setup_ssl_certbot(bottom_win):
     load_domain_name_from_file()
 
     if not domain_name:
-        print("Domain name is not set. Please configure Nginx first.")
+        bottom_win.addstr("Domain name is not set. Please configure Nginx first.\n")
+        bottom_win.refresh()
         return
 
-    if not is_nginx_running():
-        print("Nginx is not running. Please start Nginx before setting up SSL.")
+    if not is_nginx_running(bottom_win):
+        bottom_win.addstr("Nginx is not running. Please start Nginx before setting up SSL.\n")
+        bottom_win.refresh()
         return
 
     if not verify_domain_accessible(domain_name):
-        print("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.")
+        bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
+        bottom_win.refresh()
         return
 
-    print("Setting up SSL with Certbot...")
+    bottom_win.addstr("Setting up SSL with Certbot...\n")
+    bottom_win.refresh()
 
     if not is_certbot_installed():
         if get_user_response("Certbot is not installed. Do you want to install it? (y/n): "):
-            print("Installing Certbot...")
+            bottom_win.addstr("Installing Certbot...\n")
+            bottom_win.refresh()
             os.system("sudo apt-get install -y certbot python3-certbot-nginx")
         else:
-            print("Please install Certbot before setting up SSL.")
+            bottom_win.addstr("Please install Certbot before setting up SSL.\n")
+            bottom_win.refresh()
             return
 
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
-        print(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...")
+        bottom_win.addstr(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
+        bottom_win.refresh()
         os.system(f"sudo certbot --nginx -d {domain_name}")
     else:
-        print("Certificate files already exist. Skipping certificate request.")
+        bottom_win.addstr("Certificate files already exist. Skipping certificate request.\n")
+        bottom_win.refresh()
 
     # Check if Nginx configuration is valid
     config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
     if config_test_result.returncode != 0:
-        print("Nginx configuration test failed. Please fix the issues before proceeding.")
-        print(config_test_result.stderr)
+        bottom_win.addstr("Nginx configuration test failed. Please fix the issues before proceeding.\n")
+        bottom_win.addstr(config_test_result.stderr + "\n")
+        bottom_win.refresh()
         return
     else:
-        print("Nginx configuration test passed.")
+        bottom_win.addstr("Nginx configuration test passed.\n")
+        bottom_win.refresh()
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
-        print("Setting up automatic certificate renewal...")
+        bottom_win.addstr("Setting up automatic certificate renewal...\n")
+        bottom_win.refresh()
         os.system('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null')
     else:
-        print("Automatic certificate renewal not set up.")
+        bottom_win.addstr("Automatic certificate renewal not set up.\n")
+        bottom_win.refresh()
 
-    print("SSL setup with Certbot completed.")
+    bottom_win.addstr("SSL setup with Certbot completed.\n")
+    bottom_win.refresh()
 
 def step4_install_docker_docker_compose_git(bottom_win):
     print(colored("Installing Docker, Docker Compose, and Git...", "cyan"))
