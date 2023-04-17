@@ -39,7 +39,8 @@ def main_installation_function():
         # Divide the screen into two parts
         top_win = curses.newwin(5, curses.COLS, 0, 0)
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
-
+        load_domain_name_from_file(bottom_win)
+        
         if saved_step > 0:
             bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
             bottom_win.refresh()
@@ -102,14 +103,18 @@ def save_domain_name_to_file():
     with open("domain_name.txt", "w") as f:
         f.write(domain_name)
 
-def load_domain_name_from_file():
+def load_domain_name_from_file(bottom_win=None):
     global domain_name
 
     try:
         with open("domain_name.txt", "r") as f:
             domain_name = f.read().strip()
     except FileNotFoundError:
-        print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
+        if bottom_win:
+            bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
+            bottom_win.refresh()
+        else:
+            print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
 
 def get_user_response(prompt, bottom_win=None):
     while True:
