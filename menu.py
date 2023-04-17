@@ -29,19 +29,6 @@ def main_installation_function():
     progress_filename = "installation_progress.txt"
     saved_step = read_progress_file(progress_filename)
 
-    if saved_step > 0:
-        bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
-        bottom_win.refresh()
-        response = get_user_response("Do you want to continue from the saved step? (y/n): ")
-
-        if not response:
-            response = get_user_response("Do you want to start with a fresh install? (y/n): ")
-            if not response:
-                bottom_win.addstr("Aborted installation.\n")
-                bottom_win.refresh()
-                return
-            saved_step = 0
-
     # Initialize curses
     stdscr = curses.initscr()
     curses.noecho()
@@ -53,39 +40,52 @@ def main_installation_function():
         top_win = curses.newwin(5, curses.COLS, 0, 0)
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
 
-        def update_step_status(step):
-            top_win.clear()
-            for i in range(1, step):
-                top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
-            top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
-            top_win.refresh()
+        if saved_step > 0:
+            bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
+            bottom_win.refresh()
+            response = get_user_response("Do you want to continue from the saved step? (y/n): ")
 
-        if saved_step < 1:
-            update_step_status(1)
-            step1_update_and_upgrade_system(bottom_win)
-            update_progress_file(progress_filename, 1)
+            if not response:
+                response = get_user_response("Do you want to start with a fresh install? (y/n): ")
+                if not response:
+                    bottom_win.addstr("Aborted installation.\n")
+                    bottom_win.refresh()
+                    return
+                saved_step = 0
 
-        if saved_step < 2:
-            update_step_status(2)
-            step2_configure_nginx(bottom_win)
-            update_progress_file(progress_filename, 2)
+            def update_step_status(step):
+                top_win.clear()
+                for i in range(1, step):
+                    top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
+                top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
+                top_win.refresh()
 
-        if saved_step < 3:
-            update_step_status(3)
-            step3_setup_ssl_certbot(bottom_win)
-            update_progress_file(progress_filename, 3)
+            if saved_step < 1:
+                update_step_status(1)
+                step1_update_and_upgrade_system(bottom_win)
+                update_progress_file(progress_filename, 1)
 
-        if saved_step < 4:
-            update_step_status(4)
-            step4_install_docker_docker_compose_git(bottom_win)
-            update_progress_file(progress_filename, 4)
+            if saved_step < 2:
+                update_step_status(2)
+                step2_configure_nginx(bottom_win)
+                update_progress_file(progress_filename, 2)
 
-        if saved_step < 5:
-            update_step_status(5)
-            step5_setup_gpt_chatbot_ui(bottom_win)
-            update_progress_file(progress_filename, 5)
+            if saved_step < 3:
+                update_step_status(3)
+                step3_setup_ssl_certbot(bottom_win)
+                update_progress_file(progress_filename, 3)
 
-        # Add more steps as needed if you want to customize the installation process
+            if saved_step < 4:
+                update_step_status(4)
+                step4_install_docker_docker_compose_git(bottom_win)
+                update_progress_file(progress_filename, 4)
+
+            if saved_step < 5:
+                update_step_status(5)
+                step5_setup_gpt_chatbot_ui(bottom_win)
+                update_progress_file(progress_filename, 5)
+
+            # Add more steps as needed if you want to customize the installation process
 
     finally:
         # Clean up curses
@@ -97,7 +97,7 @@ def main_installation_function():
     # Remove the progress file once the installation is complete
     if os.path.exists(progress_filename):
         os.remove(progress_filename)
-
+        
 def save_domain_name_to_file():
     with open("domain_name.txt", "w") as f:
         f.write(domain_name)
