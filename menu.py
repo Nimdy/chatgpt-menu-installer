@@ -92,7 +92,8 @@ def main_installation_function():
         curses.echo()
         curses.endwin()
 
-        # Remove the progress file once the installation is complete
+    # Remove the progress file once the installation is complete
+    if os.path.exists(progress_filename):
         os.remove(progress_filename)
 
 def save_domain_name_to_file():
