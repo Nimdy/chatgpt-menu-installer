@@ -30,16 +30,15 @@ def main_installation_function():
     saved_step = read_progress_file(progress_filename)
 
     if saved_step > 0:
-        bottom_win.addstr(f"Continuing installation from step {saved_step}.")
+        bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
         bottom_win.refresh()
         response = get_user_response("Do you want to continue from the saved step? (y/n): ")
 
         if not response:
             response = get_user_response("Do you want to start with a fresh install? (y/n): ")
             if not response:
-                bottom_win.addstr("Aborted installation.")
+                bottom_win.addstr("Aborted installation.\n")
                 bottom_win.refresh()
-
                 return
             saved_step = 0
 
@@ -112,7 +111,7 @@ def load_domain_name_from_file():
     except FileNotFoundError:
         print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
 
-def get_user_response(prompt, bottom_win):
+def get_user_response(prompt, bottom_win=None):
     while True:
         bottom_win.addstr(prompt)
         bottom_win.refresh()
