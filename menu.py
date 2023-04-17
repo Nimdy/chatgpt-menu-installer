@@ -7,6 +7,7 @@ import shutil
 import socket
 import re
 import time
+import tempfile
 from termcolor import colored
 
 domain_name = None
@@ -288,9 +289,13 @@ server {{
             print("Aborted Nginx configuration.")
             return
 
-    with open(sites_available_path, "w") as f:
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        temp_path = f.name
         f.write(nginx_config)
 
+    os.system(f"sudo mv {temp_path} {sites_available_path}")
+    os.system(f"sudo chown root:root {sites_available_path}")
+    os.system(f"sudo chmod 644 {sites_available_path}")
     os.system(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
     is_successful, _, error = safe_system_call("sudo nginx -t")
     if not is_successful:
