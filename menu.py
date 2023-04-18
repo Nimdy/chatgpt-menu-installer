@@ -363,7 +363,7 @@ server {{
         bottom_win.addstr("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.\n")
         bottom_win.refresh()
 
-    if is_certbot_installed():
+    if is_certbot_installed(bottom_win):
         if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): "):
             step3_setup_ssl_certbot(bottom_win)
         else:
