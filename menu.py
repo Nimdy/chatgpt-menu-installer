@@ -267,6 +267,7 @@ def step2_configure_nginx(bottom_win):
     curses.noecho()  # Disable echo
     bottom_win.addstr("\n")
     bottom_win.refresh()
+    bottom_win.clrtobot()  # Clear the screen from the current cursor position to the bottom
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
         bottom_win.addstr(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.\n")
@@ -430,7 +431,13 @@ def step3_setup_ssl_certbot(bottom_win):
     if not os.path.exists(cert_path):
         wrapped_text = textwrap.wrap(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win.getmaxyx()[1])  # Wrap the text
         for line in wrapped_text:
-            bottom_win.addstr(line + "\n")  # Add wrapped lines to bottom_win
+            y, x = bottom_win.getyx()  # Get current cursor position
+            max_y, max_x = bottom_win.getmaxyx()  # Get screen dimensions
+            if y == max_y - 1:  # If cursor is at the last row
+                bottom_win.move(y, 0)  # Move cursor to the beginning of the row
+            else:
+                bottom_win.addstr("\n")
+            bottom_win.addstr(line)  # Add wrapped lines to bottom_win
         bottom_win.refresh()
         run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
     else:
