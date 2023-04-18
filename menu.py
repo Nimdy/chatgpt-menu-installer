@@ -113,9 +113,12 @@ def main_installation_function():
         os.remove(progress_filename)
 
 def save_domain_name_to_file(bottom_win):
-    domain_name_file = os.path.expanduser("~") + "/chatbot-ui/domain_name.txt"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    domain_name_file = os.path.join(script_dir, "domain_name.txt")
+    
     with open(domain_name_file, "w") as f:
         f.write(domain_name)
+    
     bottom_win.addstr(f"Domain name saved to {domain_name_file}\n")
     bottom_win.refresh()
 
