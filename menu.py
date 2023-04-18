@@ -51,6 +51,13 @@ def run_command_with_curses(command, bottom_win):
     bottom_win.scrollok(False)
     return exit_code
 
+def add_wrapped_text(text, bottom_win):
+    max_x = bottom_win.getmaxyx()[1]
+    wrapped_lines = textwrap.wrap(text, max_x)
+    for line in wrapped_lines:
+        bottom_win.addstr(line + "\n")
+    bottom_win.refresh()
+
 def main_installation_function():
     progress_filename = "installation_progress.txt"
     
@@ -151,22 +158,25 @@ def safe_system_call(cmd):
     return result.returncode == 0, result.stdout, result.stderr
 
 def step1_update_and_upgrade_system(bottom_win):
-    bottom_win.addstr("Updating the package list...\n")
-    bottom_win.refresh()
+    def add_wrapped_text(text):
+        max_x = bottom_win.getmaxyx()[1]
+        wrapped_lines = textwrap.wrap(text, max_x)
+        for line in wrapped_lines:
+            bottom_win.addstr(line + "\n")
+        bottom_win.refresh()
+
+    add_wrapped_text("Updating the package list...")
     run_command_with_curses("sudo apt-get update", bottom_win)
 
-    bottom_win.addstr("Upgrading the system...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Upgrading the system...")
     run_command_with_curses("sudo apt-get upgrade -y", bottom_win)
 
-    bottom_win.addstr("Cleaning up unused packages...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Cleaning up unused packages...")
     run_command_with_curses("sudo apt-get autoremove -y", bottom_win)
 
-    bottom_win.addstr("System update and upgrade completed.\n")
-    bottom_win.addstr("Please reboot the system to apply the changes.\n")
-    bottom_win.addstr("After rebooting, run this script again to continue with menu option 2.\n")
-    bottom_win.refresh()
+    add_wrapped_text("System update and upgrade completed.")
+    add_wrapped_text("Please reboot the system to apply the changes.")
+    add_wrapped_text("After rebooting, run this script again to continue with menu option 2.")
 
 def create_new_user(bottom_win):
     while True:
@@ -377,7 +387,7 @@ server {{
             bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
             bottom_win.refresh()
 
-def is_certbot_installed():
+def is_certbot_installed(bottom_win):
     try:
         subprocess.check_output("which certbot", shell=True)
         return True
