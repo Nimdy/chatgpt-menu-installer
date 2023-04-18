@@ -134,7 +134,12 @@ def get_user_response(prompt, bottom_win=None):
         curses.noecho()  # Disable echo
 
         if response in ['y', 'n']:
-            bottom_win.addstr("\n")
+            y, x = bottom_win.getyx()  # Get current cursor position
+            max_y, max_x = bottom_win.getmaxyx()  # Get screen dimensions
+            if y == max_y - 1:  # If cursor is at the last row
+                bottom_win.move(y, 0)  # Move cursor to the beginning of the row
+            else:
+                bottom_win.addstr("\n")
             bottom_win.refresh()
             return response == 'y'
         else:
