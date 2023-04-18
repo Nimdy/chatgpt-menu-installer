@@ -568,7 +568,11 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
 
     while True:
         for key, default_value in env_vars.items():
-            user_input = get_user_response(f"Enter {key} (default: '{default_value}'): ", bottom_win)
+            bottom_win.addstr(f"Enter {key} (default: '{default_value}'): ")
+            bottom_win.refresh()
+            curses.echo()
+            user_input = bottom_win.getstr().decode("utf-8")
+            curses.noecho()
             env_vars[key] = user_input.strip() or default_value
 
         bottom_win.addstr("\nPlease verify the entered values:\n")
@@ -577,25 +581,34 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
             bottom_win.addstr(f"{key}: {value}\n")
             bottom_win.refresh()
 
-        user_input = get_user_response("\nIs the information correct? (y/n): ", bottom_win)
-        if user_input.lower() == "y":
+        bottom_win.addstr("\nIs the information correct? (y/n): ")
+        bottom_win.refresh()
+        curses.echo()
+        user_input = bottom_win.getstr().decode("utf-8").lower()
+        curses.noecho()
+        if user_input == "y":
             break
 
-        # Check if the .env.local file exists
-        if os.path.exists(".env.local"):
-            if get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win).lower() != "y":
-                bottom_win.addstr("Skipping overwriting the .env.local file.\n")
-                bottom_win.refresh()
-            else:
-                # Save and overwrite the vars in the .env.local file
-                with open(".env.local", "w") as f:
-                    for key, value in env_vars.items():
-                        f.write(f"{key}={value}\n")
+    # Check if the .env.local file exists
+    if os.path.exists(".env.local"):
+        bottom_win.addstr("The .env.local file already exists. Do you want to overwrite it? (y/n): ")
+        bottom_win.refresh()
+        curses.echo()
+        user_input = bottom_win.getstr().decode("utf-8").lower()
+        curses.noecho()
+        if user_input != "y":
+            bottom_win.addstr("Skipping overwriting the .env.local file.\n")
+            bottom_win.refresh()
         else:
-            # Create and write the vars in the .env.local file
+            # Save and overwrite the vars in the .env.local file
             with open(".env.local", "w") as f:
                 for key, value in env_vars.items():
                     f.write(f"{key}={value}\n")
+    else:
+        # Create and write the vars in the .env.local file
+        with open(".env.local", "w") as f:
+            for key, value in env_vars.items():
+                f.write(f"{key}={value}\n")
 
     # Test the docker-compose
     bottom_win.addstr("Testing the docker-compose...\n")
