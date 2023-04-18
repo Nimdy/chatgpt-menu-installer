@@ -447,42 +447,41 @@ def step3_setup_ssl_certbot(bottom_win):
     bottom_win.refresh()
 
 def step4_install_docker_docker_compose_git(bottom_win):
-    bottom_win.addstr("Installing Docker, Docker Compose, and Git...\n")
-    bottom_win.refresh()
+    def add_wrapped_text(text):
+        max_x = bottom_win.getmaxyx()[1]
+        wrapped_lines = textwrap.wrap(text, max_x)
+        for line in wrapped_lines:
+            bottom_win.addstr(line + "\n")
+        bottom_win.refresh()
 
-    bottom_win.addstr("Installing Git...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Installing Docker, Docker Compose, and Git...\n")
+
+    add_wrapped_text("Installing Git...\n")
     run_command_with_curses("sudo apt-get install -y git", bottom_win)
 
-    bottom_win.addstr("Installing Docker...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Installing Docker...\n")
     run_command_with_curses("sudo apt-get install -y docker.io", bottom_win)
     run_command_with_curses("sudo systemctl enable --now docker", bottom_win)
 
-    bottom_win.addstr("Installing Docker Compose...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Installing Docker Compose...\n")
     run_command_with_curses("sudo apt-get install -y docker-compose", bottom_win)
 
     current_user = getpass.getuser()
     if current_user == "root":
-        bottom_win.addstr("\nWarning: It's not recommended to run Docker as root.\n")
-        bottom_win.addstr("Please choose a different user to add to the docker group:\n")
-        bottom_win.refresh()
+        add_wrapped_text("\nWarning: It's not recommended to run Docker as root.\nPlease choose a different user to add to the docker group:\n")
 
         home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
-        
+
         if len(home_users) == 1 and "root" in home_users:
             if get_user_response("No users found other than root. Do you want to create a new user? (y/n): ", bottom_win):
                 new_user = create_new_user(bottom_win)
                 home_users.append(new_user)
             else:
-                bottom_win.addstr("Aborted adding a user to the docker group.\n")
-                bottom_win.refresh()
+                add_wrapped_text("Aborted adding a user to the docker group.\n")
                 return
 
         for idx, user in enumerate(home_users):
-            bottom_win.addstr(f"{idx + 1}. {user}\n")
-            bottom_win.refresh()
+            add_wrapped_text(f"{idx + 1}. {user}")
 
         while True:
             selected_user = get_user_response("\nEnter the number of the user you want to add to the docker group: ", bottom_win)
@@ -491,30 +490,25 @@ def step4_install_docker_docker_compose_git(bottom_win):
                 if 1 <= selected_user <= len(home_users):
                     break
                 else:
-                    bottom_win.addstr("Invalid selection. Please try again.\n")
-                    bottom_win.refresh()
+                    add_wrapped_text("Invalid selection. Please try again.")
             except ValueError:
-                bottom_win.addstr("Invalid input. Please enter a number.\n")
-                bottom_win.refresh()
+                add_wrapped_text("Invalid input. Please enter a number.")
 
         selected_user = home_users[selected_user - 1]
         if selected_user == "root":
             if not get_user_response("Are you sure you want to add root to the docker group? (y/n): ", bottom_win):
-                bottom_win.addstr("Aborted adding root to the docker group.\n")
-                bottom_win.refresh()
+                add_wrapped_text("Aborted adding root to the docker group.")
                 return
     else:
         selected_user = current_user
 
-    bottom_win.addstr(f"Adding {selected_user} to the docker group...\n")
-    bottom_win.refresh()
+    add_wrapped_text(f"Adding {selected_user} to the docker group...")
     run_command_with_curses(f"sudo usermod -aG docker {selected_user}", bottom_win)
 
     # Restart Docker service
     run_command_with_curses("sudo systemctl restart docker", bottom_win)
 
-    bottom_win.addstr("Installation of Docker, Docker Compose, and Git completed.\n")
-    bottom_win.refresh()
+    add_wrapped_text("Installation of Docker, Docker Compose, and Git completed.")
 
 def check_docker_group_membership():
     user = getpass.getuser()
