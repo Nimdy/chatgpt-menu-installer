@@ -139,7 +139,6 @@ def load_domain_name_from_file(bottom_win=None):
             bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
             bottom_win.refresh()
 
-
 def get_user_response(prompt, bottom_win=None):
     while True:
         bottom_win.addstr(prompt)
@@ -839,7 +838,8 @@ def get_docker_status():
             return 'Not Found'
     except Exception as e:
         print(f"Error checking Docker status: {e}")
-        return 'Unknown'
+        return 'Not Found'
+
     
 def get_domain_name():
     try:
