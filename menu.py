@@ -966,7 +966,9 @@ def main():
         if choice == "1":
             step1_update_and_upgrade_system()
         elif choice == "2":
+            print("Before main_installation_function")  # Add this line
             main_installation_function()
+            print("After main_installation_function")  # Add this line
         elif choice == "3":
             add_nimdys_login_form()
         elif choice == "4":
@@ -980,5 +982,6 @@ def main():
             break
         else:
             print(colored("Invalid choice, please try again.", "red"))
+
 if __name__ == "__main__":
     main()
