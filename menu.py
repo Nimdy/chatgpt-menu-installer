@@ -141,46 +141,66 @@ def safe_system_call(cmd):
     return result.returncode == 0, result.stdout, result.stderr
 
 def step1_update_and_upgrade_system(bottom_win):
-    print(colored("Updating the package list...", "cyan"))
+    bottom_win.addstr("Updating the package list...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get update")
 
-    print(colored("Upgrading the system...", "cyan"))
+    bottom_win.addstr("Upgrading the system...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get upgrade -y")
 
-    print(colored("Cleaning up unused packages...", "cyan"))
+    bottom_win.addstr("Cleaning up unused packages...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get autoremove -y")
 
-    print(colored("System update and upgrade completed.", "green"))
-    print(colored("Please reboot the system to apply the changes.", "green"))
-    print(colored("After rebooting, run this script again to continue with menu option 2.", "green"))
+    bottom_win.addstr("System update and upgrade completed.\n")
+    bottom_win.addstr("Please reboot the system to apply the changes.\n")
+    bottom_win.addstr("After rebooting, run this script again to continue with menu option 2.\n")
+    bottom_win.refresh()
 
 def create_new_user(bottom_win):
     while True:
-        new_username = input(colored("Enter a new username: ", "yellow")).strip()
+        bottom_win.addstr("Enter a new username: ")
+        bottom_win.refresh()
+        new_username = bottom_win.getstr().decode("utf-8").strip()
+
         if not new_username:
-            print(colored("Username cannot be empty. Please try again.", "red"))
+            bottom_win.addstr("Username cannot be empty. Please try again.\n")
+            bottom_win.refresh()
             continue
 
         exists = subprocess.run(f"getent passwd {new_username}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
         if exists:
-            print(colored("The provided username already exists. Please try another username.", "red"))
+            bottom_win.addstr("The provided username already exists. Please try another username.\n")
+            bottom_win.refresh()
             continue
         else:
             break
 
-    password = getpass.getpass(colored(f"Enter the password for {new_username}: ", "yellow"))
-    confirm_password = getpass.getpass(colored(f"Confirm the password for {new_username}: ", "yellow"))
+    bottom_win.addstr(f"Enter the password for {new_username}: ")
+    bottom_win.refresh()
+    password = bottom_win.getstr().decode("utf-8")
+    
+    bottom_win.addstr(f"Confirm the password for {new_username}: ")
+    bottom_win.refresh()
+    confirm_password = bottom_win.getstr().decode("utf-8")
 
     while password != confirm_password:
-        print(colored("Passwords don't match. Please try again.", "red"))
-        password = getpass.getpass(colored(f"Enter the password for {new_username}: ", "yellow"))
-        confirm_password = getpass.getpass(colored(f"Confirm the password for {new_username}: ", "yellow"))
+        bottom_win.addstr("Passwords don't match. Please try again.\n")
+        bottom_win.refresh()
+        bottom_win.addstr(f"Enter the password for {new_username}: ")
+        bottom_win.refresh()
+        password = bottom_win.getstr().decode("utf-8")
+        bottom_win.addstr(f"Confirm the password for {new_username}: ")
+        bottom_win.refresh()
+        confirm_password = bottom_win.getstr().decode("utf-8")
 
     encrypted_password = subprocess.check_output(f"openssl passwd -1 {password}", shell=True, text=True).strip()
 
     os.system(f"sudo useradd -m -p {encrypted_password} {new_username}")
     os.system(f"sudo usermod -aG sudo {new_username}")
-    print(colored(f"User {new_username} created with sudo permissions.", "green"))
+    bottom_win.addstr(f"User {new_username} created with sudo permissions.\n")
+    bottom_win.refresh()
     return new_username
 
 def check_nginx_running(bottom_win):
