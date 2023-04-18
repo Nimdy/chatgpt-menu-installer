@@ -826,22 +826,22 @@ def get_nginx_status():
         print(f"Error checking Nginx status: {e}")
         return 'Unknown'
 
-# def get_docker_status():
-#     try:
-#         container_name = 'chatbot-ui_chatgpt'
-#         result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-#         status = result.stdout.strip()
+def get_docker_status():
+    try:
+        container_name = 'chatbot-ui_chatgpt'
+        result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        status = result.stdout.strip()
 
-#         if status:
-#             return status
-#         else:
-#             return 'Not Found'
-#     except FileNotFoundError:
-#         print("Docker command not found. Docker might not be installed.")
-#         return 'Docker not installed'
-#     except Exception as e:
-#         print(f"Error checking Docker status: {e}")
-#         return 'Error'
+        if status:
+            return status
+        else:
+            return 'Not Found'
+    except FileNotFoundError:
+        print("Docker command not found. Docker might not be installed.")
+        return 'Docker not installed'
+    except Exception as e:
+        print(f"Error checking Docker status: {e}")
+        return 'Error'
     
 def get_domain_name():
     try:
@@ -923,15 +923,16 @@ def check_dependency_status():
 
     print("\nDependency check completed.")
 
-def print_dashboard(nginx_status, domain_name, public_ip, total_connections, active_connections):
+def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
     print(colored(f"│          Chatbot UI Management Dashboard                    │", "cyan"))
     print(colored("├─────────────────────────────────────────────────────────────┤", "cyan"))
     print(colored(f"│  1. Nginx Server: {nginx_status}", "magenta"))
-    print(colored(f"│  2. Domain Name: {domain_name}", "magenta"))
-    print(colored(f"│  3. Public IP: {public_ip}", "magenta"))
-    print(colored(f"│  4. Total UI Accesses: {total_connections}", "magenta"))
-    print(colored(f"│  5. Active UI Accesses: {active_connections}", "magenta"))
+    print(colored(f"│  2. Docker Service Status: {docker_status}", "magenta"))
+    print(colored(f"│  3. Domain Name: {domain_name}", "magenta"))
+    print(colored(f"│  4. Public IP: {public_ip}", "magenta"))
+    print(colored(f"│  5. Total UI Accesses: {total_connections}", "magenta"))
+    print(colored(f"│  6. Active UI Accesses: {active_connections}", "magenta"))
     print(colored("└─────────────────────────────────────────────────────────────┘", "cyan"))
 
 def print_menu():
@@ -949,13 +950,13 @@ def main():
     while True:
         # Replace the placeholders with the relevant variables or function calls 
         nginx_status = get_nginx_status()    
-        # docker_status = get_docker_status()
+        docker_status = get_docker_status()
         domain_name = get_domain_name()
         public_ip = get_ips()
         total_connections = get_total_connections()
         active_connections = get_active_connections()
 
-        print_dashboard(nginx_status, domain_name, public_ip, total_connections, active_connections)
+        print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
 
         # Menu
         print_menu()
