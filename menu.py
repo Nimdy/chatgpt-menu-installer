@@ -134,12 +134,11 @@ def load_domain_name_from_file(bottom_win=None):
         with open("domain_name.txt", "r") as f:
             domain_name = f.read().strip()
     except FileNotFoundError:
+        domain_name = ""
         if bottom_win:
             bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
             bottom_win.refresh()
-        else:
-            bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.")
-            bottom_win.refresh()
+
 
 def get_user_response(prompt, bottom_win=None):
     while True:

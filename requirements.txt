@@ -1,9 +1,3 @@
 requests
 shutilwhich
-termcolor==1.1.0
-# For Linux and macOS
-curses; sys_platform != "win32"
-
-# For Windows
-# I am not doing windows development, so I am not sure if this is correct
-#windows-curses; sys_platform == "win32"
+termcolor
