@@ -320,7 +320,7 @@ server {{
 
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
-        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): "):
+        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): ", bottom_win):
             bottom_win.addstr("Aborted Nginx configuration.\n")
             bottom_win.refresh()
             return
@@ -364,7 +364,7 @@ server {{
         bottom_win.refresh()
 
     if is_certbot_installed(bottom_win):
-        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): "):
+        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): ", bottom_win):
             step3_setup_ssl_certbot(bottom_win)
         else:
             bottom_win.addstr("SSL setup with Certbot skipped.\n")
@@ -426,7 +426,7 @@ def step3_setup_ssl_certbot(bottom_win):
     bottom_win.refresh()
 
     if not is_certbot_installed():
-        if get_user_response("Certbot is not installed. Do you want to install it? (y/n): "):
+        if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
             os.system("sudo apt-get install -y certbot python3-certbot-nginx")
@@ -456,7 +456,7 @@ def step3_setup_ssl_certbot(bottom_win):
         bottom_win.addstr("Nginx configuration test passed.\n")
         bottom_win.refresh()
 
-    if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
+    if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
         bottom_win.addstr("Setting up automatic certificate renewal...\n")
         bottom_win.refresh()
         os.system('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null')
