@@ -420,7 +420,9 @@ def step3_setup_ssl_certbot(bottom_win):
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
-        bottom_win.addstr(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
+        wrapped_text = textwrap.wrap(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win.getmaxyx()[1])  # Wrap the text
+        for line in wrapped_text:
+            bottom_win.addstr(line + "\n")  # Add wrapped lines to bottom_win
         bottom_win.refresh()
         os.system(f"sudo certbot --nginx -d {domain_name}")
     else:
