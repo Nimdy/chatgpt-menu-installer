@@ -248,7 +248,13 @@ def step2_configure_nginx(bottom_win):
         bottom_win.refresh()
         return
 
-    domain_name = get_user_response("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ", bottom_win)
+    bottom_win.addstr("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
+    bottom_win.refresh()
+    curses.echo()  # Enable echo
+    domain_name = bottom_win.getstr().strip().decode("utf-8")
+    curses.noecho()  # Disable echo
+    bottom_win.addstr("\n")
+    bottom_win.refresh()
 
 
     domain_visible, ip_address = is_domain_publicly_visible(domain_name, bottom_win)
