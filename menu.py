@@ -11,6 +11,7 @@ import tempfile
 import getpass
 import grp
 import curses
+import traceback
 from termcolor import colored
 
 domain_name = None
@@ -105,6 +106,9 @@ def main_installation_function():
                 update_progress_file(progress_filename, 5)
 
             # Add more steps as needed if you want to customize the installation process
+    except Exception as e:  # Add this block
+        print(f"Error: {e}")
+        traceback.print_exc()
 
     finally:
         # Clean up curses
@@ -966,9 +970,7 @@ def main():
         if choice == "1":
             step1_update_and_upgrade_system()
         elif choice == "2":
-            print("Before main_installation_function")  # Add this line
             main_installation_function()
-            print("After main_installation_function")  # Add this line
         elif choice == "3":
             add_nimdys_login_form()
         elif choice == "4":
@@ -982,6 +984,5 @@ def main():
             break
         else:
             print(colored("Invalid choice, please try again.", "red"))
-
 if __name__ == "__main__":
     main()
