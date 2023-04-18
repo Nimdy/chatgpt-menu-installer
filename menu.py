@@ -600,7 +600,7 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
 
         # Check if the .env.local file exists
         if os.path.exists(".env.local"):
-            if not get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win):
+            if get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win).lower() != "y":
                 bottom_win.addstr("Skipping overwriting the .env.local file.\n")
                 bottom_win.refresh()
             else:
