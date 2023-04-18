@@ -415,112 +415,71 @@ def step3_setup_ssl_certbot(bottom_win):
     bottom_win.refresh()
 
 def step4_install_docker_docker_compose_git(bottom_win):
-    print(colored("Installing Docker, Docker Compose, and Git...", "cyan"))
+    bottom_win.addstr("Installing Docker, Docker Compose, and Git...\n")
+    bottom_win.refresh()
 
-    print(colored("Installing Git...", "cyan"))
+    bottom_win.addstr("Installing Git...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get install -y git")
 
-    print(colored("Installing Docker...", "cyan"))
+    bottom_win.addstr("Installing Docker...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get install -y docker.io")
     os.system("sudo systemctl enable --now docker")
 
-    print(colored("Installing Docker Compose...", "cyan"))
+    bottom_win.addstr("Installing Docker Compose...\n")
+    bottom_win.refresh()
     os.system("sudo apt-get install -y docker-compose")
 
     current_user = getpass.getuser()
     if current_user == "root":
-        print(colored("\nWarning: It's not recommended to run Docker as root.", "yellow"))
-        print(colored("Please choose a different user to add to the docker group:", "yellow"))
+        bottom_win.addstr("\nWarning: It's not recommended to run Docker as root.\n")
+        bottom_win.addstr("Please choose a different user to add to the docker group:\n")
+        bottom_win.refresh()
 
         home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
         
         if len(home_users) == 1 and "root" in home_users:
-            if get_user_response(colored("No users found other than root. Do you want to create a new user? (y/n): ", "yellow")):
-                new_user = create_new_user()
+            if get_user_response("No users found other than root. Do you want to create a new user? (y/n): ", bottom_win):
+                new_user = create_new_user(bottom_win)
                 home_users.append(new_user)
             else:
-                print(colored("Aborted adding a user to the docker group.", "red"))
+                bottom_win.addstr("Aborted adding a user to the docker group.\n")
+                bottom_win.refresh()
                 return
 
         for idx, user in enumerate(home_users):
-            print(colored(f"{idx + 1}. {user}", "green"))
+            bottom_win.addstr(f"{idx + 1}. {user}\n")
+            bottom_win.refresh()
 
         while True:
-            selected_user = input(colored("\nEnter the number of the user you want to add to the docker group: ", "yellow"))
+            selected_user = get_user_response("\nEnter the number of the user you want to add to the docker group: ", bottom_win)
             try:
                 selected_user = int(selected_user)
                 if 1 <= selected_user <= len(home_users):
                     break
                 else:
-                    print(colored("Invalid selection. Please try again.", "red"))
+                    bottom_win.addstr("Invalid selection. Please try again.\n")
+                    bottom_win.refresh()
             except ValueError:
-                print(colored("Invalid input. Please enter a number.", "red"))
+                bottom_win.addstr("Invalid input. Please enter a number.\n")
+                bottom_win.refresh()
 
         selected_user = home_users[selected_user - 1]
         if selected_user == "root":
-            if not get_user_response(colored("Are you sure you want to add root to the docker group? (y/n): ", "yellow")):
-                print(colored("Aborted adding root to the docker group.", "red"))
+            if not get_user_response("Are you sure you want to add root to the docker group? (y/n): ", bottom_win):
+                bottom_win.addstr("Aborted adding root to the docker group.\n")
+                bottom_win.refresh()
                 return
     else:
         selected_user = current_user
 
-    print(colored(f"Adding {selected_user} to the docker group...", "cyan"))
+    bottom_win.addstr(f"Adding {selected_user} to the docker group...\n")
+    bottom_win.refresh()
     os.system(f"sudo usermod -aG docker {selected_user}")
 
-    print(colored("Installation of Docker, Docker Compose, and Git completed.", "green"))
-    print("Installing Docker, Docker Compose, and Git...")
-
-    print("Installing Git...")
-    os.system("sudo apt-get install -y git")
-
-    print("Installing Docker...")
-    os.system("sudo apt-get install -y docker.io")
-    os.system("sudo systemctl enable --now docker")
-
-    print("Installing Docker Compose...")
-    os.system("sudo apt-get install -y docker-compose")
-
-    current_user = getpass.getuser()
-    if current_user == "root":
-        print("\nWarning: It's not recommended to run Docker as root.")
-        print("Please choose a different user to add to the docker group:")
-
-        home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
-        
-        if len(home_users) == 1 and "root" in home_users:
-            if get_user_response("No users found other than root. Do you want to create a new user? (y/n): "):
-                new_user = create_new_user()
-                home_users.append(new_user)
-            else:
-                print("Aborted adding a user to the docker group.")
-                return
-
-        for idx, user in enumerate(home_users):
-            print(f"{idx + 1}. {user}")
-
-        while True:
-            selected_user = input("\nEnter the number of the user you want to add to the docker group: ")
-            try:
-                selected_user = int(selected_user)
-                if 1 <= selected_user <= len(home_users):
-                    break
-                else:
-                    print("Invalid selection. Please try again.")
-            except ValueError:
-                print("Invalid input. Please enter a number.")
-
-        selected_user = home_users[selected_user - 1]
-        if selected_user == "root":
-            if not get_user_response("Are you sure you want to add root to the docker group? (y/n): "):
-                print("Aborted adding root to the docker group.")
-                return
-    else:
-        selected_user = current_user
-
-    print(f"Adding {selected_user} to the docker group...")
-    os.system(f"sudo usermod -aG docker {selected_user}")
-
-    print("Installation of Docker, Docker Compose, and Git completed.")
+    bottom_win.addstr("Installation of Docker, Docker Compose, and Git completed.\n")
+    bottom_win.refresh()
 
 def check_docker_group_membership(bottom_win):
     user = getpass.getuser()
@@ -530,10 +489,12 @@ def check_docker_group_membership(bottom_win):
 def add_user_to_docker_group(bottom_win):
     user = getpass.getuser()
     os.system(f"sudo usermod -aG docker {user}")
-    print(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.")
+    bottom_win.addstr(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.\n")
+    bottom_win.refresh()
 
 def step5_setup_gpt_chatbot_ui(bottom_win):
-    print("Setting up GPT Chatbot UI...")
+    bottom_win.addstr("Setting up GPT Chatbot UI...\n")
+    bottom_win.refresh()
 
     # Step 1: Change to the appropriate directory
     if getpass.getuser() == "root":
@@ -551,7 +512,8 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
     if os.path.exists(".env.local.example"):
         shutil.move(".env.local.example", ".env.local")
     else:
-        print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.")
+        bottom_win.addstr("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n")
+        bottom_win.refresh()
 
     # Step 5: Ask the user for input based on the following VARS
     env_vars = {
@@ -569,21 +531,24 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
 
     while True:
         for key, default_value in env_vars.items():
-            user_input = input(f"Enter {key} (default: '{default_value}'): ")
+            user_input = get_user_response(f"Enter {key} (default: '{default_value}'): ", bottom_win)
             env_vars[key] = user_input.strip() or default_value
 
-        print("\nPlease verify the entered values:")
+        bottom_win.addstr("\nPlease verify the entered values:\n")
+        bottom_win.refresh()
         for key, value in env_vars.items():
-            print(f"{key}: {value}")
+            bottom_win.addstr(f"{key}: {value}\n")
+            bottom_win.refresh()
 
-        user_input = input("\nIs the information correct? (y/n): ")
+        user_input = get_user_response("\nIs the information correct? (y/n): ", bottom_win)
         if user_input.lower() == "y":
             break
 
         # Check if the .env.local file exists
         if os.path.exists(".env.local"):
-            if not get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): "):
-                print("Skipping overwriting the .env.local file.")
+            if not get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win):
+                bottom_win.addstr("Skipping overwriting the .env.local file.\n")
+                bottom_win.refresh()
             else:
                 # Save and overwrite the vars in the .env.local file
                 with open(".env.local", "w") as f:
@@ -596,43 +561,56 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
                     f.write(f"{key}={value}\n")
 
     # Test the docker-compose
-    print("Testing the docker-compose...")
+    bottom_win.addstr("Testing the docker-compose...\n")
+    bottom_win.refresh()
     test_result = os.system("docker-compose config")
     if test_result != 0:
-        print("There are errors in the docker-compose configuration. Please fix them before proceeding.")
+        bottom_win.addstr("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        bottom_win.refresh()
         return
 
     # Check if the user is part of the Docker group
-    if not check_docker_group_membership():
-        print("You need to be a member of the 'docker' group to start the services.")
-        user_input = input("Do you want to be added to the 'docker' group? (y/n): ")
+    if not check_docker_group_membership(bottom_win):
+        bottom_win.addstr("You need to be a member of the 'docker' group to start the services.\n")
+        bottom_win.refresh()
+        user_input = get_user_response("Do you want to be added to the 'docker' group? (y/n): ", bottom_win)
         if user_input.lower() == "y":
-            add_user_to_docker_group()
-            print("Please log out and log back in, and then run the script again to start the services.")
+            add_user_to_docker_group(bottom_win)
+            bottom_win.addstr("Please log out and log back in, and then run the script again to start the services.\n")
+            bottom_win.refresh()
             return
         else:
-            print("You will need to add yourself to the 'docker' group manually to start the services.")
+            bottom_win.addstr("You will need to add yourself to the 'docker' group manually to start the services.\n")
+            bottom_win.refresh()
 
     # Ask the user if they wish to start the services
-    user_input = input("Do you want to start the services? (y/n): ")
+    user_input = get_user_response("Do you want to start the services? (y/n): ", bottom_win)
     if user_input.lower() == "y":
         os.system("docker-compose up -d")
-        print("Services started.")
+        bottom_win.addstr("Services started.\n")
+        bottom_win.refresh()
     else:
-        print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.")
-        print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.")
+        bottom_win.addstr("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
+        bottom_win.addstr("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
+        bottom_win.refresh()
 
-    print("GPT Chatbot UI setup completed.")
+    bottom_win.addstr("GPT Chatbot UI setup completed.\n")
+    bottom_win.refresh()
 
-def update_gpt_chatbot_ui():
-    print("Checking for updates in GPT Chatbot UI...")
+def update_gpt_chatbot_ui(bottom_win):
+    bottom_win.addstr("Checking for updates in GPT Chatbot UI...\n")
+    bottom_win.refresh()
 
     # Step 1: Change back to the user directory
-    os.chdir(os.path.expanduser("~"))
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
 
     # Step 2: Check if the chatbot-ui directory exists
     if not os.path.exists("chatbot-ui"):
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        bottom_win.refresh()
         return
 
     os.chdir("chatbot-ui")
@@ -643,24 +621,30 @@ def update_gpt_chatbot_ui():
     # Step 4: Check if there are updates available
     updates_available = os.system("git diff --quiet origin/main")
     if updates_available != 0:
-        print("Updates are available.")
-        if get_user_response("Do you want to update GPT Chatbot UI? (y/n): "):
+        bottom_win.addstr("Updates are available.\n")
+        bottom_win.refresh()
+        if get_user_response("Do you want to update GPT Chatbot UI? (y/n): ", bottom_win):
             # Step 5: Pull updates from the remote repository
             os.system("git pull")
 
             # Step 6: Shut down the old Docker image
-            print("Shutting down the old Docker image...")
+            bottom_win.addstr("Shutting down the old Docker image...\n")
+            bottom_win.refresh()
             os.system("docker-compose down")
 
             # Step 7: Create a new Docker image based on the updated docker-compose.yml file
-            print("Creating a new Docker image...")
+            bottom_win.addstr("Creating a new Docker image...\n")
+            bottom_win.refresh()
             os.system("docker-compose up -d")
 
-            print("GPT Chatbot UI update completed.")
+            bottom_win.addstr("GPT Chatbot UI update completed.\n")
+            bottom_win.refresh()
         else:
-            print("Update canceled.")
+            bottom_win.addstr("Update canceled.\n")
+            bottom_win.refresh()
     else:
-        print("GPT Chatbot UI is already up to date.")
+        bottom_win.addstr("GPT Chatbot UI is already up to date.\n")
+        bottom_win.refresh()
 
 def download_file(url, local_path):
     response = requests.get(url)
