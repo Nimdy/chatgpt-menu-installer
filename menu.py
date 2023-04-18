@@ -426,7 +426,7 @@ def step3_setup_ssl_certbot(bottom_win):
     bottom_win.addstr("Setting up SSL with Certbot...\n")
     bottom_win.refresh()
 
-    if not is_certbot_installed():
+    if not is_certbot_installed(bottom_win):
         if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
