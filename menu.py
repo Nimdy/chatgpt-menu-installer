@@ -11,7 +11,7 @@ import tempfile
 import getpass
 import grp
 import curses
-import traceback
+import textwrap
 from termcolor import colored
 
 domain_name = None
@@ -30,22 +30,23 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def run_command_with_curses(command, bottom_win):
-    print(f"Executing command: {command}")  # Add this line
+    print(f"Executing command: {command}")
     y, x = bottom_win.getyx()
     max_y, max_x = bottom_win.getmaxyx()
     # Enable scrolling for bottom_win
     bottom_win.scrollok(True)
     with os.popen(command) as stream:
         for line in stream:
-            if y >= max_y - 1:
-                bottom_win.scroll(1)
-                y -= 1
-            bottom_win.addstr(y, 0, line.strip())
-            y += 1
+            wrapped_lines = textwrap.wrap(line.strip(), max_x)  # Wrap the line to fit within the window's width
+            for wrapped_line in wrapped_lines:
+                if y >= max_y - 1:
+                    bottom_win.scroll(1)
+                    y -= 1
+                bottom_win.addstr(y, 0, wrapped_line)
+                y += 1
             bottom_win.refresh()
     # Disable scrolling for bottom_win
     bottom_win.scrollok(False)
-
 
 def main_installation_function():
     progress_filename = "installation_progress.txt"
