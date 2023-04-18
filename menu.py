@@ -50,10 +50,16 @@ def main_installation_function():
         if saved_step > 0:
             bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
             bottom_win.refresh()
+            curses.echo()  # Enable echo
             response = get_user_response("Do you want to continue from the saved step? (y/n): ", bottom_win)
+            curses.noecho()  # Disable echo
+
 
             if not response:
+                curses.echo()  # Enable echo
                 response = get_user_response("Do you want to start with a fresh install? (y/n): ", bottom_win)
+                curses.noecho()  # Disable echo
+
                 if not response:
                     bottom_win.addstr("Aborted installation.\n")
                     bottom_win.refresh()
