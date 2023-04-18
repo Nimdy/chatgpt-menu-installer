@@ -25,6 +25,12 @@ def update_progress_file(progress_filename, step):
     with open(progress_filename, "w") as f:
         f.write(str(step))
 
+def run_command_with_curses(command, bottom_win):
+    with os.popen(command) as stream:
+        for line in stream:
+            bottom_win.addstr(line)
+            bottom_win.refresh()
+
 def main_installation_function():
     progress_filename = "installation_progress.txt"
     saved_step = read_progress_file(progress_filename)
@@ -40,7 +46,7 @@ def main_installation_function():
         top_win = curses.newwin(5, curses.COLS, 0, 0)
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
         load_domain_name_from_file(bottom_win)
-        
+
         if saved_step > 0:
             bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
             bottom_win.refresh()
@@ -199,24 +205,25 @@ def step2_configure_nginx(bottom_win):
     bottom_win.refresh()
 
     if not check_nginx_running(bottom_win):
-        if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): "):
+        if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Nginx...\n")
             bottom_win.refresh()
-            os.system("sudo apt-get install -y nginx")
+            run_command_with_curses("sudo apt-get install -y nginx", bottom_win)
             bottom_win.addstr("Starting Nginx...\n")
             bottom_win.refresh()
-            os.system("sudo systemctl start nginx")
+            run_command_with_curses("sudo systemctl start nginx", bottom_win)
         else:
             bottom_win.addstr("Please install and start Nginx before configuring.\n")
             bottom_win.refresh()
             return
 
-    if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): "):
+    if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): ", bottom_win):
         bottom_win.addstr("Aborted Nginx configuration.\n")
         bottom_win.refresh()
         return
 
-    domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
+    domain_name = get_user_response("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ", bottom_win)
+
 
     domain_visible, ip_address = is_domain_publicly_visible(domain_name, bottom_win)
     if not domain_visible:

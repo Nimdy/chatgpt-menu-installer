@@ -2,6 +2,8 @@
 
 Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
 
+DO NOT USE STILL REFACTORING AND testing smooth installation process- 4/17/2023 1730 MST
+
 This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server.
 
 Before starting, please ensure that you have a VPS, SSH access, and a properly configured domain name (e.g., gpt.yourdomain) pointing to your VPS IP address. This is essential for SSL certificate issuance and proxy forwarding using Nginx and Certbot.
