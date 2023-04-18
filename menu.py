@@ -515,10 +515,13 @@ def step4_install_docker_docker_compose_git(bottom_win):
     bottom_win.refresh()
     run_command_with_curses(f"sudo usermod -aG docker {selected_user}", bottom_win)
 
+    # Restart Docker service
+    run_command_with_curses("sudo systemctl restart docker", bottom_win)
+
     bottom_win.addstr("Installation of Docker, Docker Compose, and Git completed.\n")
     bottom_win.refresh()
 
-def check_docker_group_membership(bottom_win):
+def check_docker_group_membership():
     user = getpass.getuser()
     group_members = grp.getgrnam("docker").gr_mem
     return user in group_members
