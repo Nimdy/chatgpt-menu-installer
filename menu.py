@@ -233,14 +233,20 @@ def check_nginx_running(bottom_win):
     except subprocess.CalledProcessError:
         return False
 
-def is_domain_publicly_visible(domain_name):
+def is_domain_publicly_visible(domain_name, bottom_win):
     try:
         domain_ip = socket.gethostbyname(domain_name)
         public_ip = requests.get("https://api64.ipify.org").text
-        return domain_ip == public_ip, public_ip
+        if domain_ip == public_ip:
+            return True
+        else:
+            bottom_win.addstr(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).\n")
+            bottom_win.refresh()
+            return False
     except Exception as e:
-        print(f"Error: {e}")
-        return False, None
+        bottom_win.addstr(f"Error: {e}\n")
+        bottom_win.refresh()
+        return False
 
 def step2_configure_nginx(bottom_win):
     global domain_name
