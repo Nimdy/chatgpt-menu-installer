@@ -49,7 +49,11 @@ def run_command_with_curses(command, bottom_win):
 
 def main_installation_function():
     progress_filename = "installation_progress.txt"
-    saved_step = read_progress_file(progress_filename)
+    
+    if os.path.exists(progress_filename):
+        saved_step = read_progress_file(progress_filename)
+    else:
+        saved_step = 0
 
     # Initialize curses
     stdscr = curses.initscr()
@@ -63,53 +67,26 @@ def main_installation_function():
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
         load_domain_name_from_file(bottom_win)
 
-        if saved_step > 0:
-            bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
-            bottom_win.refresh()
-            response = get_user_response("Do you want to continue from the saved step? (y/n): ", bottom_win)
+        def update_step_status(step):
+            top_win.clear()
+            for i in range(1, step):
+                top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
+            top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
+            top_win.refresh()
 
-            if not response:
-                response = get_user_response("Do you want to start with a fresh install? (y/n): ", bottom_win)
-
-                if not response:
-                    bottom_win.addstr("Aborted installation.\n")
-                    bottom_win.refresh()
-                    return
-                saved_step = 0
-
-            def update_step_status(step):
-                top_win.clear()
-                for i in range(1, step):
-                    top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
-                top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
-                top_win.refresh()
-
-            if saved_step < 1:
-                update_step_status(1)
+        for step in range(saved_step + 1, 6):
+            update_step_status(step)
+            if step == 1:
                 step1_update_and_upgrade_system(bottom_win)
-                update_progress_file(progress_filename, 1)
-
-            if saved_step < 2:
-                update_step_status(2)
+            elif step == 2:
                 step2_configure_nginx(bottom_win)
-                update_progress_file(progress_filename, 2)
-
-            if saved_step < 3:
-                update_step_status(3)
+            elif step == 3:
                 step3_setup_ssl_certbot(bottom_win)
-                update_progress_file(progress_filename, 3)
-
-            if saved_step < 4:
-                update_step_status(4)
+            elif step == 4:
                 step4_install_docker_docker_compose_git(bottom_win)
-                update_progress_file(progress_filename, 4)
-
-            if saved_step < 5:
-                update_step_status(5)
+            elif step == 5:
                 step5_setup_gpt_chatbot_ui(bottom_win)
-                update_progress_file(progress_filename, 5)
-
-            # Add more steps as needed if you want to customize the installation process
+            update_progress_file(progress_filename, step)
 
     finally:
         # Clean up curses
@@ -967,15 +944,9 @@ def main():
         print_menu()
 
         choice = input(colored("\nEnter your choice: ", "yellow"))
-        # Initialize curses for bottom_win
-        stdscr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        stdscr.keypad(True)
-        bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)  # Create bottom_win
 
         if choice == "1":
-            step1_update_and_upgrade_system(bottom_win)  # Pass bottom_win as an argument
+            step1_update_and_upgrade_system()
         elif choice == "2":
             main_installation_function()
         elif choice == "3":
@@ -991,12 +962,5 @@ def main():
             break
         else:
             print(colored("Invalid choice, please try again.", "red"))
-                # Clean up curses for bottom_win
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
-
-
 if __name__ == "__main__":
     main()
