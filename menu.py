@@ -967,9 +967,15 @@ def main():
         print_menu()
 
         choice = input(colored("\nEnter your choice: ", "yellow"))
+        # Initialize curses for bottom_win
+        stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        stdscr.keypad(True)
+        bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)  # Create bottom_win
 
         if choice == "1":
-            step1_update_and_upgrade_system()
+            step1_update_and_upgrade_system(bottom_win)  # Pass bottom_win as an argument
         elif choice == "2":
             main_installation_function()
         elif choice == "3":
@@ -985,5 +991,12 @@ def main():
             break
         else:
             print(colored("Invalid choice, please try again.", "red"))
+                # Clean up curses for bottom_win
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+
 if __name__ == "__main__":
     main()
