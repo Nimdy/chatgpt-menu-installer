@@ -531,8 +531,10 @@ def check_docker_group_membership():
 
 def add_user_to_docker_group(bottom_win):
     user = getpass.getuser()
+    bottom_win.addstr(f"Adding {user} to the docker group...\n")
+    bottom_win.refresh()
     run_command_with_curses(f"sudo usermod -aG docker {user}", bottom_win)
-    bottom_win.addstr(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.\n")
+    bottom_win.addstr("User added to the docker group. Please log out and log back in for the changes to take effect.\n")
     bottom_win.refresh()
 
 def step5_setup_gpt_chatbot_ui(bottom_win):
@@ -627,7 +629,7 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
         return
 
     # Check if the user is part of the Docker group
-    if not check_docker_group_membership(bottom_win):
+    if not check_docker_group_membership():
         bottom_win.addstr("You need to be a member of the 'docker' group to start the services.\n")
         bottom_win.refresh()
         user_input = get_user_response("Do you want to be added to the 'docker' group? (y/n): ", bottom_win)
