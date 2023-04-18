@@ -392,15 +392,15 @@ def step3_setup_ssl_certbot(bottom_win):
 
     load_domain_name_from_file()
 
-    if not domain_name:
-        bottom_win.addstr("Domain name is not set. Please configure Nginx first.\n")
-        bottom_win.refresh()
-        return
+    # if not domain_name:
+    #     bottom_win.addstr("Domain name is not set. Please configure Nginx first.\n")
+    #     bottom_win.refresh()
+    #     return
 
-    if not is_nginx_running(bottom_win):
-        bottom_win.addstr("Nginx is not running. Please start Nginx before setting up SSL.\n")
-        bottom_win.refresh()
-        return
+    # if not is_nginx_running(bottom_win):
+    #     bottom_win.addstr("Nginx is not running. Please start Nginx before setting up SSL.\n")
+    #     bottom_win.refresh()
+    #     return
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
         bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
@@ -414,7 +414,7 @@ def step3_setup_ssl_certbot(bottom_win):
         if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
-            run_command_with_curses("sudo apt-get install -y certbot python3-certbot-nginx", bottom_win)
+            run_command_with_curses("sudo pip3 install certbot-nginx", bottom_win)
         else:
             bottom_win.addstr("Please install Certbot before setting up SSL.\n")
             bottom_win.refresh()
