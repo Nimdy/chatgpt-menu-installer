@@ -371,20 +371,20 @@ server {{
         if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
-            run_command_with_curses("sudo apt-get install -y certbot", bottom_win)
+            run_command_with_curses("sudo apt-get install -y certbot python3-certbot-nginx", bottom_win)
             step3_setup_ssl_certbot(bottom_win)
         else:
             bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
             bottom_win.refresh()
 
-def is_certbot_installed(bottom_win):
+def is_certbot_installed():
     try:
         subprocess.check_output("which certbot", shell=True)
         return True
     except subprocess.CalledProcessError:
         return False
 
-def is_nginx_running(bottom_win):
+def is_nginx_running():
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1)
@@ -398,16 +398,6 @@ def step3_setup_ssl_certbot(bottom_win):
 
     load_domain_name_from_file()
 
-    # if not domain_name:
-    #     bottom_win.addstr("Domain name is not set. Please configure Nginx first.\n")
-    #     bottom_win.refresh()
-    #     return
-
-    # if not is_nginx_running(bottom_win):
-    #     bottom_win.addstr("Nginx is not running. Please start Nginx before setting up SSL.\n")
-    #     bottom_win.refresh()
-    #     return
-
     if not is_domain_publicly_visible(domain_name, bottom_win):
         bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
         bottom_win.refresh()
@@ -415,16 +405,6 @@ def step3_setup_ssl_certbot(bottom_win):
 
     bottom_win.addstr("Setting up SSL with Certbot...\n")
     bottom_win.refresh()
-
-    if not is_certbot_installed(bottom_win):
-        if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
-            bottom_win.addstr("Installing Certbot...\n")
-            bottom_win.refresh()
-            run_command_with_curses("pip3 install certbot-nginx", bottom_win)
-        else:
-            bottom_win.addstr("Please install Certbot before setting up SSL.\n")
-            bottom_win.refresh()
-            return
 
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
@@ -452,7 +432,7 @@ def step3_setup_ssl_certbot(bottom_win):
         bottom_win.refresh()
         return
     else:
-        bottom_win.addstr("Nginx configuration test passed.\n")
+        bottom_win.addstr("Nginx configuration test passed. With CertBot SSL Certs applied.\n")
         bottom_win.refresh()
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
