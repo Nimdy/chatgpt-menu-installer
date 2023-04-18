@@ -35,6 +35,7 @@ def run_command_with_curses(command, bottom_win):
     max_y, max_x = bottom_win.getmaxyx()
     # Enable scrolling for bottom_win
     bottom_win.scrollok(True)
+    exit_code = None
     with os.popen(command) as stream:
         for line in stream:
             wrapped_lines = textwrap.wrap(line.strip(), max_x)  # Wrap the line to fit within the window's width
@@ -45,8 +46,10 @@ def run_command_with_curses(command, bottom_win):
                 bottom_win.addstr(y, 0, wrapped_line)
                 y += 1
             bottom_win.refresh()
+        exit_code = stream.close()
     # Disable scrolling for bottom_win
     bottom_win.scrollok(False)
+    return exit_code
 
 def main_installation_function():
     progress_filename = "installation_progress.txt"
