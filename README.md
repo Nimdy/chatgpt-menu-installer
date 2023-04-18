@@ -2,7 +2,9 @@
 
 Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
 
-DO NOT USE STILL REFACTORING AND testing smooth installation process- 4/17/2023 1730 MST
+DO NOT USE STILL REFACTORING AND testing smooth installation process- 4/18/2023 0630 MST
+
+ALMOST DONE!!
 
 This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server.
 

@@ -50,15 +50,10 @@ def main_installation_function():
         if saved_step > 0:
             bottom_win.addstr(f"Continuing installation from step {saved_step}.\n")
             bottom_win.refresh()
-            curses.echo()  # Enable echo
             response = get_user_response("Do you want to continue from the saved step? (y/n): ", bottom_win)
-            curses.noecho()  # Disable echo
-
 
             if not response:
-                curses.echo()  # Enable echo
                 response = get_user_response("Do you want to start with a fresh install? (y/n): ", bottom_win)
-                curses.noecho()  # Disable echo
 
                 if not response:
                     bottom_win.addstr("Aborted installation.\n")
@@ -126,13 +121,16 @@ def load_domain_name_from_file(bottom_win=None):
             bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
             bottom_win.refresh()
         else:
-            print(colored("Domain name not found. It will be set during the Nginx configuration process.", "red"))
+            bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.")
+            bottom_win.refresh()
 
 def get_user_response(prompt, bottom_win=None):
     while True:
         bottom_win.addstr(prompt)
         bottom_win.refresh()
+        curses.echo()  # Enable echo
         response = bottom_win.getstr().strip().decode("utf-8").lower()
+        curses.noecho()  # Disable echo
 
         if response in ['y', 'n']:
             bottom_win.addstr("\n")
@@ -149,15 +147,15 @@ def safe_system_call(cmd):
 def step1_update_and_upgrade_system(bottom_win):
     bottom_win.addstr("Updating the package list...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get update")
+    run_command_with_curses("sudo apt-get update", bottom_win)
 
     bottom_win.addstr("Upgrading the system...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get upgrade -y")
+    run_command_with_curses("sudo apt-get upgrade -y", bottom_win)
 
     bottom_win.addstr("Cleaning up unused packages...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get autoremove -y")
+    run_command_with_curses("sudo apt-get autoremove -y", bottom_win)
 
     bottom_win.addstr("System update and upgrade completed.\n")
     bottom_win.addstr("Please reboot the system to apply the changes.\n")
@@ -168,7 +166,9 @@ def create_new_user(bottom_win):
     while True:
         bottom_win.addstr("Enter a new username: ")
         bottom_win.refresh()
+        curses.echo()  # Enable echo
         new_username = bottom_win.getstr().decode("utf-8").strip()
+        curses.noecho()  # Disable echo
 
         if not new_username:
             bottom_win.addstr("Username cannot be empty. Please try again.\n")
