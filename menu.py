@@ -400,13 +400,6 @@ def is_nginx_running(bottom_win):
     except (socket.timeout, socket.error) as e:
         return False
 
-def verify_domain_accessible(domain, bottom_win):
-    try:
-        response = requests.get(f"http://{domain}")
-        return response.status_code == 200
-    except requests.exceptions.RequestException:
-        return False
-
 def step3_setup_ssl_certbot(bottom_win):
     global domain_name
 
@@ -422,7 +415,7 @@ def step3_setup_ssl_certbot(bottom_win):
         bottom_win.refresh()
         return
 
-    if not verify_domain_accessible(domain_name, bottom_win):
+    if not is_domain_publicly_visible(domain_name, bottom_win):
         bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
         bottom_win.refresh()
         return
