@@ -414,7 +414,7 @@ def step3_setup_ssl_certbot(bottom_win):
         if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
-            run_command_with_curses("sudo pip3 install certbot-nginx", bottom_win)
+            run_command_with_curses("pip3 install certbot-nginx", bottom_win)
         else:
             bottom_win.addstr("Please install Certbot before setting up SSL.\n")
             bottom_win.refresh()
