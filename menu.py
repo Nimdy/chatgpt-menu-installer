@@ -20,7 +20,10 @@ def read_progress_file(progress_filename):
     if os.path.exists(progress_filename):
         with open(progress_filename, "r") as f:
             return int(f.read().strip())
-    return 0
+    else:
+        with open(progress_filename, "w") as f:
+            f.write("0")
+        return 0
 
 def update_progress_file(progress_filename, step):
     with open(progress_filename, "w") as f:
