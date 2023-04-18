@@ -923,16 +923,15 @@ def check_dependency_status():
 
     print("\nDependency check completed.")
 
-def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
+def print_dashboard(nginx_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
     print(colored(f"│          Chatbot UI Management Dashboard                    │", "cyan"))
     print(colored("├─────────────────────────────────────────────────────────────┤", "cyan"))
     print(colored(f"│  1. Nginx Server: {nginx_status}", "magenta"))
-    print(colored(f"│  2. Docker Service Status: {docker_status}", "magenta"))
-    print(colored(f"│  3. Domain Name: {domain_name}", "magenta"))
-    print(colored(f"│  4. Public IP: {public_ip}", "magenta"))
-    print(colored(f"│  5. Total UI Accesses: {total_connections}", "magenta"))
-    print(colored(f"│  6. Active UI Accesses: {active_connections}", "magenta"))
+    print(colored(f"│  2. Domain Name: {domain_name}", "magenta"))
+    print(colored(f"│  3. Public IP: {public_ip}", "magenta"))
+    print(colored(f"│  4. Total UI Accesses: {total_connections}", "magenta"))
+    print(colored(f"│  5. Active UI Accesses: {active_connections}", "magenta"))
     print(colored("└─────────────────────────────────────────────────────────────┘", "cyan"))
 
 def print_menu():
