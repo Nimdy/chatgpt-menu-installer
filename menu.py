@@ -826,6 +826,8 @@ def get_nginx_status():
         print(f"Error checking Nginx status: {e}")
         return 'Unknown'
 
+import subprocess
+
 def get_docker_status():
     try:
         container_name = 'chatbot-ui_chatgpt'
@@ -836,11 +838,12 @@ def get_docker_status():
             return status
         else:
             return 'Not Found'
+    except FileNotFoundError:
+        print("Docker command not found. Docker might not be installed.")
+        return 'Docker not installed'
     except Exception as e:
         print(f"Error checking Docker status: {e}")
-        return 'Docker not installed'
-
-
+        return 'Error'
     
 def get_domain_name():
     try:
