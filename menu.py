@@ -338,7 +338,7 @@ server {{
         print(error)
         return
 
-    if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): "):
+    if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): ", bottom_win):
         is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
 
         if is_successful:
