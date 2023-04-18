@@ -826,14 +826,7 @@ def get_nginx_status():
         print(f"Error checking Nginx status: {e}")
         return 'Unknown'
 
-def is_docker_installed():
-    result = subprocess.run(['command', '-v', 'docker'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.returncode == 0
-
 def get_docker_status():
-    if not is_docker_installed():
-        return "Docker not installed"
-
     try:
         container_name = 'chatbot-ui_chatgpt'
         result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -845,7 +838,7 @@ def get_docker_status():
             return 'Not Found'
     except Exception as e:
         print(f"Error checking Docker status: {e}")
-        return 'Unknown'
+        return 'Docker not installed'
 
 
     
