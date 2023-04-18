@@ -112,9 +112,12 @@ def main_installation_function():
     if os.path.exists(progress_filename):
         os.remove(progress_filename)
 
-def save_domain_name_to_file():
-    with open("domain_name.txt", "w") as f:
+def save_domain_name_to_file(bottom_win):
+    domain_name_file = os.path.expanduser("~") + "/chatbot-ui/domain_name.txt"
+    with open(domain_name_file, "w") as f:
         f.write(domain_name)
+    bottom_win.addstr(f"Domain name saved to {domain_name_file}\n")
+    bottom_win.refresh()
 
 def load_domain_name_from_file(bottom_win=None):
     global domain_name
