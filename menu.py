@@ -257,7 +257,8 @@ def step2_configure_nginx(bottom_win):
     bottom_win.refresh()
 
 
-    domain_visible, ip_address = is_domain_publicly_visible(domain_name, bottom_win)
+    domain_visible, ip_address = is_domain_publicly_visible(domain_name)
+
     if not domain_visible:
         bottom_win.addstr(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.\n")
         bottom_win.refresh()
@@ -351,12 +352,21 @@ server {{
         bottom_win.refresh()
 
     if is_certbot_installed():
-        print("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): ")
-        if get_user_response("Do you want to set up SSL with Certbot? (y/n): "):
-            step3_setup_ssl_certbot()
+        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): "):
+            step3_setup_ssl_certbot(bottom_win)
         else:
             bottom_win.addstr("SSL setup with Certbot skipped.\n")
             bottom_win.refresh()
+    else:
+        if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): ", bottom_win):
+            bottom_win.addstr("Installing Certbot...\n")
+            bottom_win.refresh()
+            run_command_with_curses("sudo apt-get install -y certbot", bottom_win)
+            step3_setup_ssl_certbot(bottom_win)
+        else:
+            bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
+            bottom_win.refresh()
+
 
 def is_certbot_installed(bottom_win):
     try:
