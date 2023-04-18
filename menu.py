@@ -26,9 +26,15 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def run_command_with_curses(command, bottom_win):
+    y, x = bottom_win.getyx()
+    max_y, max_x = bottom_win.getmaxyx()
     with os.popen(command) as stream:
         for line in stream:
-            bottom_win.addstr(line)
+            if y >= max_y - 1:
+                bottom_win.scroll(1)
+                y -= 1
+            bottom_win.addstr(y, 0, line.strip())
+            y += 1
             bottom_win.refresh()
 
 def main_installation_function():
@@ -366,7 +372,6 @@ server {{
         else:
             bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
             bottom_win.refresh()
-
 
 def is_certbot_installed(bottom_win):
     try:
