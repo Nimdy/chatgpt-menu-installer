@@ -27,6 +27,7 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def run_command_with_curses(command, bottom_win):
+    print(f"Executing command: {command}")  # Add this line
     y, x = bottom_win.getyx()
     max_y, max_x = bottom_win.getmaxyx()
     # Enable scrolling for bottom_win
@@ -106,9 +107,6 @@ def main_installation_function():
                 update_progress_file(progress_filename, 5)
 
             # Add more steps as needed if you want to customize the installation process
-    except Exception as e:  # Add this block
-        print(f"Error: {e}")
-        traceback.print_exc()
 
     finally:
         # Clean up curses
