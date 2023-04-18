@@ -43,13 +43,6 @@ def run_command_with_curses(command, bottom_win):
 
 
 def main_installation_function():
-    docker_status = get_docker_status()
-    if docker_status == 'Docker not installed':
-        print("Docker is not installed. Please install Docker before running this script.")
-        return
-    elif docker_status == 'Error':
-        print("An error occurred while checking Docker status. Please resolve the issue before running this script.")
-        return
     progress_filename = "installation_progress.txt"
     saved_step = read_progress_file(progress_filename)
 
@@ -832,8 +825,6 @@ def get_nginx_status():
     except Exception as e:
         print(f"Error checking Nginx status: {e}")
         return 'Unknown'
-
-import subprocess
 
 def get_docker_status():
     try:
