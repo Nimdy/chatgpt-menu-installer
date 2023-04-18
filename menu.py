@@ -318,10 +318,10 @@ server {{
         temp_path = f.name
         f.write(nginx_config)
 
-    os.system(f"sudo mv {temp_path} {sites_available_path}")
-    os.system(f"sudo chown root:root {sites_available_path}")
-    os.system(f"sudo chmod 644 {sites_available_path}")
-    os.system(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
+    run_command_with_curses(f"sudo mv {temp_path} {sites_available_path}", bottom_win)
+    run_command_with_curses(f"sudo chown root:root {sites_available_path}", bottom_win)
+    run_command_with_curses(f"sudo chmod 644 {sites_available_path}", bottom_win)
+    run_command_with_curses(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/", bottom_win)
     is_successful, _, error = safe_system_call("sudo nginx -t")
     if not is_successful:
         bottom_win.addstr("Error: Nginx configuration test failed.\n")
@@ -411,7 +411,7 @@ def step3_setup_ssl_certbot(bottom_win):
         if get_user_response("Certbot is not installed. Do you want to install it? (y/n): ", bottom_win):
             bottom_win.addstr("Installing Certbot...\n")
             bottom_win.refresh()
-            os.system("sudo apt-get install -y certbot python3-certbot-nginx")
+            run_command_with_curses("sudo apt-get install -y certbot python3-certbot-nginx", bottom_win)
         else:
             bottom_win.addstr("Please install Certbot before setting up SSL.\n")
             bottom_win.refresh()
@@ -424,7 +424,7 @@ def step3_setup_ssl_certbot(bottom_win):
         for line in wrapped_text:
             bottom_win.addstr(line + "\n")  # Add wrapped lines to bottom_win
         bottom_win.refresh()
-        os.system(f"sudo certbot --nginx -d {domain_name}")
+        run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
     else:
         bottom_win.addstr("Certificate files already exist. Skipping certificate request.\n")
         bottom_win.refresh()
@@ -443,7 +443,7 @@ def step3_setup_ssl_certbot(bottom_win):
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
         bottom_win.addstr("Setting up automatic certificate renewal...\n")
         bottom_win.refresh()
-        os.system('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null')
+        run_command_with_curses('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null', bottom_win)
     else:
         bottom_win.addstr("Automatic certificate renewal not set up.\n")
         bottom_win.refresh()
@@ -457,16 +457,16 @@ def step4_install_docker_docker_compose_git(bottom_win):
 
     bottom_win.addstr("Installing Git...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get install -y git")
+    run_command_with_curses("sudo apt-get install -y git", bottom_win)
 
     bottom_win.addstr("Installing Docker...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get install -y docker.io")
-    os.system("sudo systemctl enable --now docker")
+    run_command_with_curses("sudo apt-get install -y docker.io", bottom_win)
+    run_command_with_curses("sudo systemctl enable --now docker", bottom_win)
 
     bottom_win.addstr("Installing Docker Compose...\n")
     bottom_win.refresh()
-    os.system("sudo apt-get install -y docker-compose")
+    run_command_with_curses("sudo apt-get install -y docker-compose", bottom_win)
 
     current_user = getpass.getuser()
     if current_user == "root":
@@ -513,7 +513,7 @@ def step4_install_docker_docker_compose_git(bottom_win):
 
     bottom_win.addstr(f"Adding {selected_user} to the docker group...\n")
     bottom_win.refresh()
-    os.system(f"sudo usermod -aG docker {selected_user}")
+    run_command_with_curses(f"sudo usermod -aG docker {selected_user}", bottom_win)
 
     bottom_win.addstr("Installation of Docker, Docker Compose, and Git completed.\n")
     bottom_win.refresh()
@@ -525,7 +525,7 @@ def check_docker_group_membership(bottom_win):
 
 def add_user_to_docker_group(bottom_win):
     user = getpass.getuser()
-    os.system(f"sudo usermod -aG docker {user}")
+    run_command_with_curses(f"sudo usermod -aG docker {user}", bottom_win)
     bottom_win.addstr(f"{user} has been added to the 'docker' group. Please log out and log back in for the changes to take effect.\n")
     bottom_win.refresh()
 
@@ -540,7 +540,7 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
         os.chdir(os.path.expanduser("~"))
 
     # Step 2: Download the GitHub repo
-    os.system("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+    run_command_with_curses("git clone https://github.com/mckaywrigley/chatbot-ui.git", bottom_win)
 
     # Step 3: Change into the chatbot-ui directory
     os.chdir("chatbot-ui")
@@ -600,7 +600,8 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
     # Test the docker-compose
     bottom_win.addstr("Testing the docker-compose...\n")
     bottom_win.refresh()
-    test_result = os.system("docker-compose config")
+    test_result = run_command_with_curses("docker-compose config", bottom_win)
+
     if test_result != 0:
         bottom_win.addstr("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
         bottom_win.refresh()
@@ -623,7 +624,7 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
     # Ask the user if they wish to start the services
     user_input = get_user_response("Do you want to start the services? (y/n): ", bottom_win)
     if user_input.lower() == "y":
-        os.system("docker-compose up -d")
+        run_command_with_curses("docker-compose up -d", bottom_win)
         bottom_win.addstr("Services started.\n")
         bottom_win.refresh()
     else:
