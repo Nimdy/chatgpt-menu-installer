@@ -12,6 +12,8 @@ import getpass
 import grp
 import curses
 import textwrap
+import contextlib
+
 from termcolor import colored
 
 domain_name = None
@@ -33,12 +35,11 @@ def run_command_with_curses(command, bottom_win):
     print(f"Executing command: {command}")
     y, x = bottom_win.getyx()
     max_y, max_x = bottom_win.getmaxyx()
-    # Enable scrolling for bottom_win
     bottom_win.scrollok(True)
     exit_code = None
     with os.popen(command) as stream:
         for line in stream:
-            wrapped_lines = textwrap.wrap(line.strip(), max_x)  # Wrap the line to fit within the window's width
+            wrapped_lines = textwrap.wrap(line.strip(), max_x)
             for wrapped_line in wrapped_lines:
                 if y >= max_y - 1:
                     bottom_win.scroll(1)
@@ -47,7 +48,6 @@ def run_command_with_curses(command, bottom_win):
                 y += 1
             bottom_win.refresh()
         exit_code = stream.close()
-    # Disable scrolling for bottom_win
     bottom_win.scrollok(False)
     return exit_code
 
@@ -57,6 +57,19 @@ def add_wrapped_text(text, bottom_win):
     for line in wrapped_lines:
         bottom_win.addstr(line + "\n")
     bottom_win.refresh()
+
+def curses_context(stdscr):
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
+    try:
+        yield
+    finally:
+        # Clean up curses
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
 
 def main_installation_function():
     progress_filename = "installation_progress.txt"
@@ -68,11 +81,8 @@ def main_installation_function():
 
     # Initialize curses
     stdscr = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    stdscr.keypad(True)
 
-    try:
+    with curses_context(stdscr):
         # Divide the screen into two parts
         top_win = curses.newwin(5, curses.COLS, 0, 0)
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
@@ -99,18 +109,11 @@ def main_installation_function():
                 step5_setup_gpt_chatbot_ui(bottom_win)
             update_progress_file(progress_filename, step)
 
-    finally:
-        # Clean up curses
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
-
     # Remove the progress file once the installation is complete
     if os.path.exists(progress_filename):
         os.remove(progress_filename)
 
-def save_domain_name_to_file(bottom_win):
+def save_domain_name_to_file(domain_name, bottom_win):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     domain_name_file = os.path.join(script_dir, "domain_name.txt")
     
@@ -121,8 +124,6 @@ def save_domain_name_to_file(bottom_win):
     bottom_win.refresh()
 
 def load_domain_name_from_file(bottom_win=None):
-    global domain_name
-
     try:
         with open("domain_name.txt", "r") as f:
             domain_name = f.read().strip()
@@ -131,52 +132,50 @@ def load_domain_name_from_file(bottom_win=None):
         if bottom_win:
             bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
             bottom_win.refresh()
+    
+    return domain_name
 
 def get_user_response(prompt, bottom_win=None):
+    bottom_win.addstr(prompt)
+    bottom_win.refresh()
+    curses.echo()
+
     while True:
-        bottom_win.addstr(prompt)
-        bottom_win.refresh()
-        curses.echo()  # Enable echo
         response = bottom_win.getstr().strip().decode("utf-8").lower()
-        curses.noecho()  # Disable echo
 
         if response in ['y', 'n']:
-            y, x = bottom_win.getyx()  # Get current cursor position
-            max_y, max_x = bottom_win.getmaxyx()  # Get screen dimensions
-            if y == max_y - 1:  # If cursor is at the last row
-                bottom_win.move(y, 0)  # Move cursor to the beginning of the row
+            y, x = bottom_win.getyx()
+            max_y, max_x = bottom_win.getmaxyx()
+            if y == max_y - 1:
+                bottom_win.move(y, 0)
             else:
                 bottom_win.addstr("\n")
             bottom_win.refresh()
+            curses.noecho()
             return response == 'y'
         else:
             bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n")
             bottom_win.refresh()
 
 def safe_system_call(cmd):
-    result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if isinstance(cmd, str):
+        cmd = cmd.split()
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
 def step1_update_and_upgrade_system(bottom_win):
-    def add_wrapped_text(text):
-        max_x = bottom_win.getmaxyx()[1]
-        wrapped_lines = textwrap.wrap(text, max_x)
-        for line in wrapped_lines:
-            bottom_win.addstr(line + "\n")
-        bottom_win.refresh()
-
-    add_wrapped_text("Updating the package list...")
+    add_wrapped_text("Updating the package list...", bottom_win)
     run_command_with_curses("sudo apt-get update", bottom_win)
 
-    add_wrapped_text("Upgrading the system...")
+    add_wrapped_text("Upgrading the system...", bottom_win)
     run_command_with_curses("sudo apt-get upgrade -y", bottom_win)
 
-    add_wrapped_text("Cleaning up unused packages...")
+    add_wrapped_text("Cleaning up unused packages...", bottom_win)
     run_command_with_curses("sudo apt-get autoremove -y", bottom_win)
 
-    add_wrapped_text("System update and upgrade completed.")
-    add_wrapped_text("Please reboot the system to apply the changes.")
-    add_wrapped_text("After rebooting, run this script again to continue with menu option 2.")
+    add_wrapped_text("System update and upgrade completed.", bottom_win)
+    add_wrapped_text("Please reboot the system to apply the changes.", bottom_win)
+    add_wrapped_text("After rebooting, run this script again to continue with menu option 2.", bottom_win)
 
 def create_new_user(bottom_win):
     while True:
@@ -191,7 +190,7 @@ def create_new_user(bottom_win):
             bottom_win.refresh()
             continue
 
-        exists = subprocess.run(f"getent passwd {new_username}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+        exists, _, _ = safe_system_call(f"getent passwd {new_username}")
         if exists:
             bottom_win.addstr("The provided username already exists. Please try another username.\n")
             bottom_win.refresh()
@@ -217,57 +216,56 @@ def create_new_user(bottom_win):
         bottom_win.refresh()
         confirm_password = bottom_win.getstr().decode("utf-8")
 
-    encrypted_password = subprocess.check_output(f"openssl passwd -1 {password}", shell=True, text=True).strip()
+    encrypted_password = subprocess.check_output(["openssl", "passwd", "-1", password], text=True).strip()
 
-    os.system(f"sudo useradd -m -p {encrypted_password} {new_username}")
-    os.system(f"sudo usermod -aG sudo {new_username}")
+    safe_system_call(f"sudo useradd -m -p {encrypted_password} {new_username}")
+    safe_system_call(f"sudo usermod -aG sudo {new_username}")
     bottom_win.addstr(f"User {new_username} created with sudo permissions.\n")
     bottom_win.refresh()
     return new_username
 
 def check_nginx_running(bottom_win):
-    try:
-        output = subprocess.check_output("systemctl is-active nginx", shell=True)
-        return output.strip().decode("utf-8") == "active"
-    except subprocess.CalledProcessError:
-        return False
+    success, output, _ = safe_system_call("systemctl is-active nginx")
+    return success and output.strip() == "active"
 
 def is_domain_publicly_visible(domain_name, bottom_win):
     try:
         domain_ip = socket.gethostbyname(domain_name)
+    except socket.gaierror as e:
+        bottom_win.addstr(f"Error resolving domain: {e}\n")
+        bottom_win.refresh()
+        return False
+
+    try:
         public_ip = requests.get("https://api64.ipify.org").text
-        if domain_ip == public_ip:
-            return True
-        else:
-            bottom_win.addstr(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).\n")
-            bottom_win.refresh()
-            return False
-    except Exception as e:
-        bottom_win.addstr(f"Error: {e}\n")
+    except requests.RequestException as e:
+        bottom_win.addstr(f"Error getting public IP: {e}\n")
+        bottom_win.refresh()
+        return False
+
+    if domain_ip == public_ip:
+        return True
+    else:
+        bottom_win.addstr(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).\n")
         bottom_win.refresh()
         return False
 
 def step2_configure_nginx(bottom_win):
     global domain_name
-    bottom_win.addstr("Configuring Nginx...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Configuring Nginx...", bottom_win)
 
     if not check_nginx_running(bottom_win):
         if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): ", bottom_win):
-            bottom_win.addstr("Installing Nginx...\n")
-            bottom_win.refresh()
+            add_wrapped_text("Installing Nginx...", bottom_win)
             run_command_with_curses("sudo apt-get install -y nginx", bottom_win)
-            bottom_win.addstr("Starting Nginx...\n")
-            bottom_win.refresh()
+            add_wrapped_text("Starting Nginx...", bottom_win)
             run_command_with_curses("sudo systemctl start nginx", bottom_win)
         else:
-            bottom_win.addstr("Please install and start Nginx before configuring.\n")
-            bottom_win.refresh()
+            add_wrapped_text("Please install and start Nginx before configuring.", bottom_win)
             return
 
     if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): ", bottom_win):
-        bottom_win.addstr("Aborted Nginx configuration.\n")
-        bottom_win.refresh()
+        add_wrapped_text("Aborted Nginx configuration.", bottom_win)
         return
 
     bottom_win.addstr("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
@@ -280,19 +278,16 @@ def step2_configure_nginx(bottom_win):
     bottom_win.clrtobot()  # Clear the screen from the current cursor position to the bottom
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
-        bottom_win.addstr(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.\n")
-        bottom_win.refresh()
+        add_wrapped_text(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.", bottom_win)
     else:
-        bottom_win.addstr(f"The domain name {domain_name} is publicly visible.\n")
-        bottom_win.refresh()
-        save_domain_name_to_file(bottom_win)
+        add_wrapped_text(f"The domain name {domain_name} is publicly visible.", bottom_win)
+        save_domain_name_to_file(domain_name, bottom_win)
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
         if not get_user_response("Do you want to continue with the configuration? (y/n): ", bottom_win):
-            bottom_win.addstr("Aborted Nginx configuration.\n")
-            bottom_win.refresh()
+            add_wrapped_text("Aborted Nginx configuration.", bottom_win)
             return
- 
+
     nginx_config = f"""
 server {{
     listen 80;
@@ -388,11 +383,8 @@ server {{
             bottom_win.refresh()
 
 def is_certbot_installed(bottom_win):
-    try:
-        subprocess.check_output("which certbot", shell=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
+    success, _, _ = safe_system_call("which certbot")
+    return success
 
 def is_nginx_running():
     try:
@@ -406,8 +398,6 @@ def is_nginx_running():
 def step3_setup_ssl_certbot(bottom_win):
     global domain_name
 
-    load_domain_name_from_file()
-
     if not is_domain_publicly_visible(domain_name, bottom_win):
         bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
         bottom_win.refresh()
@@ -419,16 +409,7 @@ def step3_setup_ssl_certbot(bottom_win):
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
-        wrapped_text = textwrap.wrap(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win.getmaxyx()[1])  # Wrap the text
-        for line in wrapped_text:
-            y, x = bottom_win.getyx()  # Get current cursor position
-            max_y, max_x = bottom_win.getmaxyx()  # Get screen dimensions
-            if y == max_y - 1:  # If cursor is at the last row
-                bottom_win.move(y, 0)  # Move cursor to the beginning of the row
-            else:
-                bottom_win.addstr("\n")
-            bottom_win.addstr(line)  # Add wrapped lines to bottom_win
-        bottom_win.refresh()
+        add_wrapped_text(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win)
         run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
     else:
         bottom_win.addstr("Certificate files already exist. Skipping certificate request.\n")
@@ -457,28 +438,21 @@ def step3_setup_ssl_certbot(bottom_win):
     bottom_win.refresh()
 
 def step4_install_docker_docker_compose_git(bottom_win):
-    def add_wrapped_text(text):
-        max_x = bottom_win.getmaxyx()[1]
-        wrapped_lines = textwrap.wrap(text, max_x)
-        for line in wrapped_lines:
-            bottom_win.addstr(line + "\n")
-        bottom_win.refresh()
+    add_wrapped_text("Installing Docker, Docker Compose, and Git...\n", bottom_win)
 
-    add_wrapped_text("Installing Docker, Docker Compose, and Git...\n")
-
-    add_wrapped_text("Installing Git...\n")
+    add_wrapped_text("Installing Git...\n", bottom_win)
     run_command_with_curses("sudo apt-get install -y git", bottom_win)
 
-    add_wrapped_text("Installing Docker...\n")
+    add_wrapped_text("Installing Docker...\n", bottom_win)
     run_command_with_curses("sudo apt-get install -y docker.io", bottom_win)
     run_command_with_curses("sudo systemctl enable --now docker", bottom_win)
 
-    add_wrapped_text("Installing Docker Compose...\n")
+    add_wrapped_text("Installing Docker Compose...\n", bottom_win)
     run_command_with_curses("sudo apt-get install -y docker-compose", bottom_win)
 
     current_user = getpass.getuser()
     if current_user == "root":
-        add_wrapped_text("\nWarning: It's not recommended to run Docker as root.\nPlease choose a different user to add to the docker group:\n")
+        add_wrapped_text("\nWarning: It's not recommended to run Docker as root.\nPlease choose a different user to add to the docker group:\n", bottom_win)
 
         home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
 
@@ -487,11 +461,11 @@ def step4_install_docker_docker_compose_git(bottom_win):
                 new_user = create_new_user(bottom_win)
                 home_users.append(new_user)
             else:
-                add_wrapped_text("Aborted adding a user to the docker group.\n")
+                add_wrapped_text("Aborted adding a user to the docker group.\n", bottom_win)
                 return
 
         for idx, user in enumerate(home_users):
-            add_wrapped_text(f"{idx + 1}. {user}")
+            add_wrapped_text(f"{idx + 1}. {user}", bottom_win)
 
         while True:
             selected_user = get_user_response("\nEnter the number of the user you want to add to the docker group: ", bottom_win)
@@ -500,25 +474,25 @@ def step4_install_docker_docker_compose_git(bottom_win):
                 if 1 <= selected_user <= len(home_users):
                     break
                 else:
-                    add_wrapped_text("Invalid selection. Please try again.")
+                    add_wrapped_text("Invalid selection. Please try again.", bottom_win)
             except ValueError:
-                add_wrapped_text("Invalid input. Please enter a number.")
+                add_wrapped_text("Invalid input. Please enter a number.", bottom_win)
 
         selected_user = home_users[selected_user - 1]
         if selected_user == "root":
             if not get_user_response("Are you sure you want to add root to the docker group? (y/n): ", bottom_win):
-                add_wrapped_text("Aborted adding root to the docker group.")
+                add_wrapped_text("Aborted adding root to the docker group.", bottom_win)
                 return
     else:
         selected_user = current_user
 
-    add_wrapped_text(f"Adding {selected_user} to the docker group...")
+    add_wrapped_text(f"Adding {selected_user} to the docker group...", bottom_win)
     run_command_with_curses(f"sudo usermod -aG docker {selected_user}", bottom_win)
 
     # Restart Docker service
     run_command_with_curses("sudo systemctl restart docker", bottom_win)
 
-    add_wrapped_text("Installation of Docker, Docker Compose, and Git completed.")
+    add_wrapped_text("Installation of Docker, Docker Compose, and Git completed.", bottom_win)
 
 def check_docker_group_membership():
     user = getpass.getuser()
@@ -534,8 +508,7 @@ def add_user_to_docker_group(bottom_win):
     bottom_win.refresh()
 
 def step5_setup_gpt_chatbot_ui(bottom_win):
-    bottom_win.addstr("Setting up GPT Chatbot UI...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Setting up GPT Chatbot UI...\n", bottom_win)
 
     # Step 1: Change to the appropriate directory
     if getpass.getuser() == "root":
@@ -553,8 +526,7 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
     if os.path.exists(".env.local.example"):
         shutil.move(".env.local.example", ".env.local")
     else:
-        bottom_win.addstr("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n")
-        bottom_win.refresh()
+        add_wrapped_text("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n", bottom_win)
 
     # Step 5: Ask the user for input based on the following VARS
     env_vars = {
@@ -585,7 +557,8 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
             bottom_win.addstr(f"{key}: {value}\n")
             bottom_win.refresh()
 
-        bottom_win.addstr("\nIs the information correct? (y/n): ")
+        if get_user_response("\nIs the information correct? (y/n): ", bottom_win):
+            break
         bottom_win.refresh()
         curses.echo()
         user_input = bottom_win.getstr().decode("utf-8").lower()
@@ -593,21 +566,15 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
         if user_input == "y":
             break
 
-    # Check if the .env.local file exists
+   # Check if the .env.local file exists
     if os.path.exists(".env.local"):
-        bottom_win.addstr("The .env.local file already exists. Do you want to overwrite it? (y/n): ")
-        bottom_win.refresh()
-        curses.echo()
-        user_input = bottom_win.getstr().decode("utf-8").lower()
-        curses.noecho()
-        if user_input != "y":
-            bottom_win.addstr("Skipping overwriting the .env.local file.\n")
-            bottom_win.refresh()
-        else:
+        if get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win):
             # Save and overwrite the vars in the .env.local file
             with open(".env.local", "w") as f:
                 for key, value in env_vars.items():
                     f.write(f"{key}={value}\n")
+        else:
+            add_wrapped_text("Skipping overwriting the .env.local file.\n", bottom_win)
     else:
         # Create and write the vars in the .env.local file
         with open(".env.local", "w") as f:
@@ -615,46 +582,35 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
                 f.write(f"{key}={value}\n")
 
     # Test the docker-compose
-    bottom_win.addstr("Testing the docker-compose...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Testing the docker-compose...\n", bottom_win)
     test_result = run_command_with_curses("docker-compose config", bottom_win)
 
     if test_result != 0:
-        bottom_win.addstr("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
-        bottom_win.refresh()
+        add_wrapped_text("There are errors in the docker-compose configuration. Please fix them before proceeding.\n", bottom_win)
         return
 
     # Check if the user is part of the Docker group
     if not check_docker_group_membership():
-        bottom_win.addstr("You need to be a member of the 'docker' group to start the services.\n")
-        bottom_win.refresh()
-        user_input = get_user_response("Do you want to be added to the 'docker' group? (y/n): ", bottom_win)
-        if user_input.lower() == "y":
+        add_wrapped_text("You need to be a member of the 'docker' group to start the services.\n", bottom_win)
+        if get_user_response("Do you want to be added to the 'docker' group? (y/n): ", bottom_win):
             add_user_to_docker_group(bottom_win)
-            bottom_win.addstr("Please log out and log back in, and then run the script again to start the services.\n")
-            bottom_win.refresh()
+            add_wrapped_text("You might have to log out and log back in, and then run the script again to start the services.\n", bottom_win)
             return
         else:
-            bottom_win.addstr("You will need to add yourself to the 'docker' group manually to start the services.\n")
-            bottom_win.refresh()
+            add_wrapped_text("You will need to add yourself to the 'docker' group manually to start the services.\n", bottom_win)
 
     # Ask the user if they wish to start the services
-    user_input = get_user_response("Do you want to start the services? (y/n): ", bottom_win)
-    if user_input.lower() == "y":
+    if get_user_response("Do you want to start the services? (y/n): ", bottom_win):
         run_command_with_curses("docker-compose up -d", bottom_win)
-        bottom_win.addstr("Services started.\n")
-        bottom_win.refresh()
+        add_wrapped_text("Services started.\n", bottom_win)
     else:
-        bottom_win.addstr("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
-        bottom_win.addstr("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
-        bottom_win.refresh()
+        add_wrapped_text("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n", bottom_win)
+        add_wrapped_text("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n", bottom_win)
 
-    bottom_win.addstr("GPT Chatbot UI setup completed.\n")
-    bottom_win.refresh()
+    add_wrapped_text("GPT Chatbot UI setup completed.\n", bottom_win)
 
 def update_gpt_chatbot_ui(bottom_win):
-    bottom_win.addstr("Checking for updates in GPT Chatbot UI...\n")
-    bottom_win.refresh()
+    add_wrapped_text("Checking for updates in GPT Chatbot UI...\n", bottom_win)
 
     # Step 1: Change back to the user directory
     if getpass.getuser() == "root":
@@ -664,54 +620,53 @@ def update_gpt_chatbot_ui(bottom_win):
 
     # Step 2: Check if the chatbot-ui directory exists
     if not os.path.exists("chatbot-ui"):
-        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
-        bottom_win.refresh()
+        add_wrapped_text("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n", bottom_win)
         return
 
     os.chdir("chatbot-ui")
 
     # Step 3: Fetch updates from the remote repository
-    os.system("git fetch")
+    run_command_with_curses("git fetch", bottom_win)
 
     # Step 4: Check if there are updates available
     updates_available = os.system("git diff --quiet origin/main")
     if updates_available != 0:
-        bottom_win.addstr("Updates are available.\n")
-        bottom_win.refresh()
+        add_wrapped_text("Updates are available.\n", bottom_win)
         if get_user_response("Do you want to update GPT Chatbot UI? (y/n): ", bottom_win):
             # Step 5: Pull updates from the remote repository
-            os.system("git pull")
+            run_command_with_curses("git pull", bottom_win)
 
             # Step 6: Shut down the old Docker image
-            bottom_win.addstr("Shutting down the old Docker image...\n")
-            bottom_win.refresh()
-            os.system("docker-compose down")
+            add_wrapped_text("Shutting down the old Docker image...\n", bottom_win)
+            run_command_with_curses("docker-compose down", bottom_win)
 
             # Step 7: Create a new Docker image based on the updated docker-compose.yml file
-            bottom_win.addstr("Creating a new Docker image...\n")
-            bottom_win.refresh()
-            os.system("docker-compose up -d")
+            add_wrapped_text("Creating a new Docker image...\n", bottom_win)
+            run_command_with_curses("docker-compose up -d", bottom_win)
 
-            bottom_win.addstr("GPT Chatbot UI update completed.\n")
-            bottom_win.refresh()
+            add_wrapped_text("GPT Chatbot UI update completed.\n", bottom_win)
         else:
-            bottom_win.addstr("Update canceled.\n")
-            bottom_win.refresh()
+            add_wrapped_text("Update canceled.\n", bottom_win)
     else:
-        bottom_win.addstr("GPT Chatbot UI is already up to date.\n")
-        bottom_win.refresh()
+        add_wrapped_text("GPT Chatbot UI is already up to date.\n", bottom_win)
 
 def download_file(url, local_path):
-    response = requests.get(url)
-    with open(local_path, "wb") as f:
-        f.write(response.content)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(local_path, "wb") as f:
+            f.write(response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading file: {e}")
 
-def add_nimdys_login_form():
-    print("Adding Nimdys login form...")
+def add_nimdys_login_form(bottom_win):
+    bottom_win.addstr("Adding Nimdys login form...\n")
+    bottom_win.refresh()
 
-    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ")
+    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ", bottom_win)
     if not add_login_form:
-        print("Aborted adding Nimdys login form.")
+        bottom_win.addstr("Aborted adding Nimdys login form.\n")
+        bottom_win.refresh()
         return
 
     # Check if the chatbot-ui directory exists in the user's home directory or /opt/
@@ -725,7 +680,8 @@ def add_nimdys_login_form():
             break
 
     if chatbot_ui_path is None:
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        bottom_win.refresh()
         return
 
     # Download and add LoginForm.tsx to chatbot-ui/Settings/
@@ -744,7 +700,10 @@ def add_nimdys_login_form():
     response = requests.get("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/addlibs.txt")
     commands = response.text.splitlines()
     for command in commands:
-        os.system(command)
+        success, stdout, stderr = safe_system_call(command)
+        if not success:
+            bottom_win.addstr(f"Error executing command: {command}\n{stderr}\n")
+            bottom_win.refresh()
 
     # Take input for each var or accept defaults
     env_vars = {
@@ -758,11 +717,12 @@ def add_nimdys_login_form():
             user_input = input(f"Enter {key} (default: '{default_value}'): ")
             env_vars[key] = user_input.strip() or default_value
 
-        print("\nPlease verify the entered values:")
+        bottom_win.addstr("\nPlease verify the entered values:\n")
         for key, value in env_vars.items():
-            print(f"{key}: {value}")
+            bottom_win.addstr(f"{key}: {value}\n")
+        bottom_win.refresh()
 
-        correct_info = get_user_response("\nIs the information correct? (y/n): ")
+        correct_info = get_user_response("\nIs the information correct? (y/n): ", bottom_win)
         if correct_info:
             break
 
@@ -778,14 +738,17 @@ def add_nimdys_login_form():
             for key, value in env_vars.items():
                 f.write(f"{key}={value}\n")
 
-    print("Nimdys login form added.")
+    bottom_win.addstr("Nimdys login form added.\n")
+    bottom_win.refresh()
 
-def remove_nimdys_login_form():
-    print("Removing Nimdys login form...")
+def remove_nimdys_login_form(bottom_win):
+    bottom_win.addstr("Removing Nimdys login form...\n")
+    bottom_win.refresh()
 
-    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ")
+    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ", bottom_win)
     if not remove_login_form:
-        print("Aborted removing Nimdys login form.")
+        bottom_win.addstr("Aborted removing Nimdys login form.\n")
+        bottom_win.refresh()
         return
 
     # Check if the chatbot-ui directory exists in the user's home directory or /opt/
@@ -799,7 +762,8 @@ def remove_nimdys_login_form():
             break
 
     if chatbot_ui_path is None:
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        bottom_win.refresh()
         return
 
     # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
@@ -807,17 +771,19 @@ def remove_nimdys_login_form():
     if os.path.exists(login_form_backup):
         shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
     else:
-        print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
+        bottom_win.addstr("Warning: LoginForm.tsx backup not found. Skipping restoration.\n")
+        bottom_win.refresh()
 
     # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
     app_tsx_backup = os.path.join(chatbot_ui_path, "pages/_app.tsx.bak")
     if os.path.exists(app_tsx_backup):
         shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
     else:
-        print("Warning: _app.tsx backup not found. Skipping restoration.")
+        bottom_win.addstr("Warning: _app.tsx backup not found. Skipping restoration.\n")
+        bottom_win.refresh()
 
-    print("Nimdys login form removed.")
-
+    bottom_win.addstr("Nimdys login form removed.\n")
+    bottom_win.refresh()
 def get_nginx_status():
     try:
         result = subprocess.run(['systemctl', 'is-active', 'nginx'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -949,39 +915,51 @@ def print_menu():
     print(colored("0. Exit", "green"))
 
 def main():
-    load_domain_name_from_file()
-    while True:
-        # Replace the placeholders with the relevant variables or function calls 
-        nginx_status = get_nginx_status()    
-        docker_status = get_docker_status()
-        domain_name = get_domain_name()
-        public_ip = get_ips()
-        total_connections = get_total_connections()
-        active_connections = get_active_connections()
+    def main_window(stdscr):
+        curses.curs_set(0)  # Hide cursor
+        stdscr.timeout(100)  # Refresh every 100 ms
 
-        print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
+        while True:
+            stdscr.clear()
 
-        # Menu
-        print_menu()
+            # Replace the placeholders with the relevant variables or function calls
+            nginx_status = get_nginx_status()
+            docker_status = get_docker_status()
+            domain_name = get_domain_name()
+            public_ip = get_ips()
+            total_connections = get_total_connections()
+            active_connections = get_active_connections()
 
-        choice = input(colored("\nEnter your choice: ", "yellow"))
+            print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
 
-        if choice == "1":
-            step1_update_and_upgrade_system()
-        elif choice == "2":
-            main_installation_function()
-        elif choice == "3":
-            add_nimdys_login_form()
-        elif choice == "4":
-            remove_nimdys_login_form()
-        elif choice == "5":
-            check_dependency_status()   
-        elif choice == "42":
-            update_gpt_chatbot_ui()
-        elif choice == "0":
-            print(colored("Exiting... Close the Terminal to exit the script.", "red"))
-            break
-        else:
-            print(colored("Invalid choice, please try again.", "red"))
+            # Menu
+            print_menu()
+
+            choice = stdscr.getch()
+
+            if choice == ord("1"):
+                step1_update_and_upgrade_system()
+            elif choice == ord("2"):
+                main_installation_function()
+            elif choice == ord("3"):
+                add_nimdys_login_form()
+            elif choice == ord("4"):
+                remove_nimdys_login_form()
+            elif choice == ord("5"):
+                check_dependency_status()
+            elif choice == ord("42"):
+                update_gpt_chatbot_ui()
+            elif choice == ord("0"):
+                stdscr.addstr(colored("Exiting... Close the Terminal to exit the script.", "red"))
+                stdscr.refresh()
+                time.sleep(2)
+                break
+            elif choice != -1:
+                stdscr.addstr(colored("Invalid choice, please try again.", "red"))
+                stdscr.refresh()
+                time.sleep(2)
+
+    curses.wrapper(main_window)
+
 if __name__ == "__main__":
     main()
