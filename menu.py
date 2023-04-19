@@ -32,7 +32,7 @@ def update_progress_file(progress_filename, step):
         f.write(str(step))
 
 def run_command_with_curses(command, bottom_win):
-    print(f"Executing command: {command}")
+    add_wrapped_text(f"Executing command: {command}", bottom_win)
     y, x = bottom_win.getyx()
     max_y, max_x = bottom_win.getmaxyx()
     bottom_win.scrollok(True)
@@ -144,7 +144,7 @@ def get_user_response(prompt, bottom_win=None):
     while True:
         response = bottom_win.getstr().strip().decode("utf-8").lower()
 
-        if response in ['y', 'n']:
+        if response in ['y', 'n', 'q']:
             y, x = bottom_win.getyx()
             max_y, max_x = bottom_win.getmaxyx()
             if y == max_y - 1:
@@ -153,9 +153,13 @@ def get_user_response(prompt, bottom_win=None):
                 bottom_win.addstr("\n")
             bottom_win.refresh()
             curses.noecho()
-            return response == 'y'
+
+            if response == 'q':
+                raise SystemExit("User chose to quit.")
+            else:
+                return response == 'y'
         else:
-            bottom_win.addstr("Invalid input. Please enter 'y' or 'n'.\n")
+            bottom_win.addstr("Invalid input. Please enter 'y', 'n', or 'q' to quit.\n")
             bottom_win.refresh()
 
 def safe_system_call(cmd):
