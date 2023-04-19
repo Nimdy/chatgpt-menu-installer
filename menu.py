@@ -46,6 +46,13 @@ def run_command_with_curses(command, bottom_win):
                     y -= 1
                 bottom_win.addstr(y, 0, wrapped_line)
                 y += 1
+                # Check if the cursor is at the last row before adding a new line
+                y, x = bottom_win.getyx()
+                if y == max_y - 1:
+                    bottom_win.scroll(1)
+                    y -= 1
+                else:
+                    bottom_win.addstr("\n")
             bottom_win.refresh()
         exit_code = stream.close()
     bottom_win.scrollok(False)
@@ -55,7 +62,14 @@ def add_wrapped_text(text, bottom_win):
     max_x = bottom_win.getmaxyx()[1]
     wrapped_lines = textwrap.wrap(text, max_x)
     for line in wrapped_lines:
-        bottom_win.addstr(line + "\n")
+        y, x = bottom_win.getyx()
+        max_y, max_x = bottom_win.getmaxyx()
+        if y == max_y - 1:
+            bottom_win.scroll(1)
+            bottom_win.move(y, 0)
+        else:
+            bottom_win.addstr("\n")
+        bottom_win.addstr(line)
     bottom_win.refresh()
 
 @contextlib.contextmanager
