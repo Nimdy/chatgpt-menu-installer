@@ -915,51 +915,39 @@ def print_menu():
     print(colored("0. Exit", "green"))
 
 def main():
-    def main_window(stdscr):
-        curses.curs_set(0)  # Hide cursor
-        stdscr.timeout(100)  # Refresh every 100 ms
+    load_domain_name_from_file()
+    while True:
+        # Replace the placeholders with the relevant variables or function calls 
+        nginx_status = get_nginx_status()    
+        docker_status = get_docker_status()
+        domain_name = get_domain_name()
+        public_ip = get_ips()
+        total_connections = get_total_connections()
+        active_connections = get_active_connections()
 
-        while True:
-            stdscr.clear()
+        print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
 
-            # Replace the placeholders with the relevant variables or function calls
-            nginx_status = get_nginx_status()
-            docker_status = get_docker_status()
-            domain_name = get_domain_name()
-            public_ip = get_ips()
-            total_connections = get_total_connections()
-            active_connections = get_active_connections()
+        # Menu
+        print_menu()
 
-            print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections)
+        choice = input(colored("\nEnter your choice: ", "yellow"))
 
-            # Menu
-            print_menu()
-
-            choice = stdscr.getch()
-
-            if choice == ord("1"):
-                step1_update_and_upgrade_system()
-            elif choice == ord("2"):
-                main_installation_function()
-            elif choice == ord("3"):
-                add_nimdys_login_form()
-            elif choice == ord("4"):
-                remove_nimdys_login_form()
-            elif choice == ord("5"):
-                check_dependency_status()
-            elif choice == ord("42"):
-                update_gpt_chatbot_ui()
-            elif choice == ord("0"):
-                stdscr.addstr(colored("Exiting... Close the Terminal to exit the script.", "red"))
-                stdscr.refresh()
-                time.sleep(2)
-                break
-            elif choice != -1:
-                stdscr.addstr(colored("Invalid choice, please try again.", "red"))
-                stdscr.refresh()
-                time.sleep(2)
-
-    curses.wrapper(main_window)
-
+        if choice == "1":
+            step1_update_and_upgrade_system()
+        elif choice == "2":
+            main_installation_function()
+        elif choice == "3":
+            add_nimdys_login_form()
+        elif choice == "4":
+            remove_nimdys_login_form()
+        elif choice == "5":
+            check_dependency_status()   
+        elif choice == "42":
+            update_gpt_chatbot_ui()
+        elif choice == "0":
+            print(colored("Exiting... Close the Terminal to exit the script.", "red"))
+            break
+        else:
+            print(colored("Invalid choice, please try again.", "red"))
 if __name__ == "__main__":
     main()
