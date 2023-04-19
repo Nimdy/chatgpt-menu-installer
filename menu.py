@@ -40,19 +40,19 @@ def run_command_with_curses(command, bottom_win):
     with os.popen(command) as stream:
         for line in stream:
             wrapped_lines = textwrap.wrap(line.strip(), max_x)
-            for wrapped_line in wrapped_lines:
+            for i, wrapped_line in enumerate(wrapped_lines):
                 if y >= max_y - 1:
                     bottom_win.scroll(1)
                     y -= 1
                 bottom_win.addstr(y, 0, wrapped_line)
                 y += 1
-                # Check if the cursor is at the last row before adding a new line
-                y, x = bottom_win.getyx()
-                if y == max_y - 1:
-                    bottom_win.scroll(1)
-                    y -= 1
-                else:
-                    bottom_win.addstr("\n")
+            # Add a new line only after the last wrapped line
+            y, x = bottom_win.getyx()
+            if y == max_y - 1:
+                bottom_win.scroll(1)
+                y -= 1
+            else:
+                bottom_win.addstr("\n")
             bottom_win.refresh()
         exit_code = stream.close()
     bottom_win.scrollok(False)
@@ -61,17 +61,18 @@ def run_command_with_curses(command, bottom_win):
 def add_wrapped_text(text, bottom_win):
     max_x = bottom_win.getmaxyx()[1]
     wrapped_lines = textwrap.wrap(text, max_x)
-    for line in wrapped_lines:
+    for i, line in enumerate(wrapped_lines):
         y, x = bottom_win.getyx()
         max_y, max_x = bottom_win.getmaxyx()
         if y == max_y - 1:
             bottom_win.scroll(1)
             bottom_win.move(y, 0)
-        else:
-            bottom_win.addstr("\n")
         bottom_win.addstr(line)
+        # Add a new line only after the last wrapped line
+        if i < len(wrapped_lines) - 1:
+            bottom_win.addstr("\n")
     bottom_win.refresh()
-
+    
 @contextlib.contextmanager
 def curses_context(stdscr):
     curses.noecho()
