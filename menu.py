@@ -298,12 +298,15 @@ def step2_configure_nginx(bottom_win):
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
         add_wrapped_text(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.", bottom_win)
+        bottom_win.refresh()
     else:
         add_wrapped_text(f"The domain name {domain_name} is publicly visible.", bottom_win)
+        bottom_win.refresh()
         save_domain_name_to_file(domain_name, bottom_win)
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
         if not get_user_response("Do you want to continue with the configuration? (y/n): ", bottom_win):
+            bottom_win.refresh()
             add_wrapped_text("Aborted Nginx configuration.", bottom_win)
             return
 
