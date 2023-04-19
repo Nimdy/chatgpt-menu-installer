@@ -40,20 +40,19 @@ def run_command_with_curses(command, bottom_win):
     with os.popen(command) as stream:
         for line in stream:
             wrapped_lines = textwrap.wrap(line.strip(), max_x)
-            for i, wrapped_line in enumerate(wrapped_lines):
+            for wrapped_line in wrapped_lines:
                 if y >= max_y - 1:
                     bottom_win.scroll(1)
                     y -= 1
                 bottom_win.addstr(y, 0, wrapped_line)
                 y += 1
-                # Add a new line only after the last wrapped line
-                if i == len(wrapped_lines) - 1:
-                    y, x = bottom_win.getyx()
-                    if y == max_y - 1:
-                        bottom_win.scroll(1)
-                        y -= 1
-                    else:
-                        bottom_win.addstr("\n")
+                # Check if the cursor is at the last row before adding a new line
+                y, x = bottom_win.getyx()
+                if y == max_y - 1:
+                    bottom_win.scroll(1)
+                    y -= 1
+                else:
+                    bottom_win.addstr("\n")
             bottom_win.refresh()
         exit_code = stream.close()
     bottom_win.scrollok(False)
