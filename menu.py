@@ -346,7 +346,7 @@ server {{
 
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
-        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): \n ", bottom_win):
+        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): ", bottom_win):
             bottom_win.addstr("Aborted Nginx configuration.\n")
             bottom_win.refresh()
             return
@@ -422,17 +422,21 @@ def step3_setup_ssl_certbot(bottom_win):
     global domain_name
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
+        bottom_win.addstr("\n")
         add_wrapped_text("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.", bottom_win)
         return
 
+    bottom_win.addstr("\n")
     add_wrapped_text("Setting up SSL with Certbot...", bottom_win)
 
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         add_wrapped_text(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win)
+        bottom_win.addstr("\n")
         run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
     else:
+        bottom_win.addstr("\n")
         add_wrapped_text("Certificate files already exist. Skipping certificate request.", bottom_win)
 
     # Check if Nginx configuration is valid
@@ -442,12 +446,16 @@ def step3_setup_ssl_certbot(bottom_win):
         add_wrapped_text(config_test_result.stderr, bottom_win)
         return
     else:
+        bottom_win.addstr("\n")
         add_wrapped_text("Nginx configuration test passed. With CertBot SSL Certs applied.", bottom_win)
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
+        bottom_win.addstr("\n")
         add_wrapped_text("Setting up automatic certificate renewal...", bottom_win)
+        bottom_win.addstr("\n")
         run_command_with_curses('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null', bottom_win)
     else:
+        bottom_win.addstr("\n")
         add_wrapped_text("Automatic certificate renewal not set up.", bottom_win)
 
     add_wrapped_text("SSL setup with Certbot completed.", bottom_win)
