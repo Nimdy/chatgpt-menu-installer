@@ -67,13 +67,13 @@ def safe_system_call(cmd):
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
-def run_command(args, input=None):
+def run_command(args, stdin=None, stdout=None):
     try:
-        result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, input=input)
+        result = subprocess.run(args, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, text=True)
         return True, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)
-
+    
 def create_new_user():
     while True:
         new_username = input("Enter a new username: ").strip()
@@ -505,7 +505,7 @@ def step3_setup_ssl_certbot():
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
-        success, stdout, stderr = run_command(["sudo", "certbot", "--nginx", "-d", domain_name], input=subprocess.PIPE)
+        success, stdout, stderr = run_command(["sudo", "certbot", "--nginx", "-d", domain_name], stdin=None, stdout=None)
         print("\n")
     else:
         print("\nCertificate files already exist. Skipping certificate request.\n")
