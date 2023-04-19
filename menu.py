@@ -27,8 +27,6 @@ def update_progress_file(progress_filename, step):
     with open(progress_filename, "w") as f:
         f.write(str(step))
 
-
-
 def save_domain_name_to_file(domain_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     domain_name_file = os.path.join(script_dir, "domain_name.txt")
@@ -580,7 +578,15 @@ def step5_setup_gpt_chatbot_ui():
         os.chdir(os.path.expanduser("~"))
 
     # Step 2: Download the GitHub repo
-    run_command("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+    if not os.path.exists("chatbot-ui"):
+        user_input = input("The 'chatbot-ui' directory was not found. Do you want to download it? (y/n): ").lower()
+        if user_input == "y":
+            run_command("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+        else:
+            print("Please download the 'chatbot-ui' directory and follow the instructions.\n")
+            return
+    else:
+        print("The 'chatbot-ui' directory already exists.\n")
 
     # Step 3: Change into the chatbot-ui directory
     os.chdir("chatbot-ui")
