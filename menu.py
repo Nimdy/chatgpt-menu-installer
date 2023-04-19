@@ -582,6 +582,9 @@ def step5_setup_gpt_chatbot_ui():
         user_input = input("The 'chatbot-ui' directory was not found. Do you want to download it? (y/n): ").lower()
         if user_input == "y":
             run_command("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+            if not os.path.exists("chatbot-ui"):
+                print("Error: Failed to download the 'chatbot-ui' directory. Please try again.\n")
+                return
         else:
             print("Please download the 'chatbot-ui' directory and follow the instructions.\n")
             return
