@@ -261,6 +261,8 @@ def step2_configure_nginx(bottom_win):
             run_command_with_curses("sudo apt-get install -y nginx", bottom_win)
             add_wrapped_text("Starting Nginx...", bottom_win)
             run_command_with_curses("sudo systemctl start nginx", bottom_win)
+            bottom_win.refresh()
+            bottom_win.clrtobot() 
         else:
             add_wrapped_text("Please install and start Nginx before configuring.", bottom_win)
             return
