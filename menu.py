@@ -349,18 +349,24 @@ def main_installation_function():
 
 def step1_update_and_upgrade_system():
     print("Updating the package list...")
-    run_command(["sudo", "apt-get", "update"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "update"])
+    if not success:
+        print(f"Error updating package list: {stderr}")
 
     print("Upgrading the system...")
-    run_command(["sudo", "apt-get", "upgrade", "-y"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "upgrade", "-y"])
+    if not success:
+        print(f"Error upgrading the system: {stderr}")
 
     print("Cleaning up unused packages...")
-    run_command(["sudo", "apt-get", "autoremove", "-y"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "autoremove", "-y"])
+    if not success:
+        print(f"Error cleaning up unused packages: {stderr}")
 
     print("System update and upgrade completed.")
     print("Please reboot the system to apply the changes.")
     print("After rebooting, run this script again to continue with menu option 2.")
-
+    
 def step2_configure_nginx():
     global domain_name
     print("Configuring Nginx...")
@@ -368,9 +374,9 @@ def step2_configure_nginx():
     if not check_nginx_running():
         if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): "):
             print("Installing Nginx...")
-            run_command("sudo apt-get install -y nginx")
+            success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "nginx"])
             print("Starting Nginx...")
-            run_command("sudo systemctl start nginx")
+            success, stdout, stderr = run_command(["sudo", "systemctl", "start", "nginx"])
         else:
             print("Please install and start Nginx before configuring.")
             return
@@ -435,10 +441,10 @@ server {{
         temp_path = f.name
         f.write(nginx_config)
 
-    run_command(f"sudo mv {temp_path} {sites_available_path}")
-    run_command(f"sudo chown root:root {sites_available_path}")
-    run_command(f"sudo chmod 644 {sites_available_path}")
-    run_command(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
+    success, stdout, stderr = run_command(["sudo", "mv", temp_path, sites_available_path])
+    success, stdout, stderr = run_command(["sudo", "chown", "root:root", sites_available_path])
+    success, stdout, stderr = run_command(["sudo", "chmod", "644", sites_available_path])
+    success, stdout, stderr = run_command(["sudo", "ln", "-sf", f"/etc/nginx/sites-available/{domain_name}", "/etc/nginx/sites-enabled/"])
     is_successful, _, error = safe_system_call("sudo nginx -t")
     if not is_successful:
         print("Error: Nginx configuration test failed.")
@@ -470,7 +476,7 @@ server {{
     else:
         if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): "):
             print("Installing Certbot...")
-            run_command("sudo apt-get install -y certbot python3-certbot-nginx")
+            success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "certbot", "python3-certbot-nginx"])
             step3_setup_ssl_certbot()
         else:
             print("Certbot installation and SSL setup skipped.")
@@ -488,7 +494,7 @@ def step3_setup_ssl_certbot():
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
-        run_command(f"sudo certbot --nginx -d {domain_name}")
+        success, stdout, stderr = run_command(["sudo", "certbot", "--nginx", "-d", domain_name])
         print("\n")
     else:
         print("\nCertificate files already exist. Skipping certificate request.\n")
@@ -504,7 +510,7 @@ def step3_setup_ssl_certbot():
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
         print("\nSetting up automatic certificate renewal...\n")
-        run_command('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null')
+        success, stdout, stderr = run_command(["echo", "0 5 * * * /usr/bin/certbot renew --quiet", "|", "sudo", "tee", "-a", "/etc/crontab", ">", "/dev/null"])
         print("\n")
     else:
         print("\nAutomatic certificate renewal not set up.\n")
@@ -515,14 +521,15 @@ def step4_install_docker_docker_compose_git():
     print("Installing Docker, Docker Compose, and Git...\n")
 
     print("Installing Git...\n")
-    run_command("sudo apt-get install -y git")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "git"])
 
     print("Installing Docker...\n")
-    run_command("sudo apt-get install -y docker.io")
-    run_command("sudo systemctl enable --now docker")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker.io"])
+    success, stdout, stderr = run_command(["sudo", "systemctl", "enable", "--now", "docker"])
 
     print("Installing Docker Compose...\n")
-    run_command("sudo apt-get install -y docker-compose")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker-compose"])
+
 
     current_user = getpass.getuser()
     if current_user == "root":
@@ -561,10 +568,14 @@ def step4_install_docker_docker_compose_git():
         selected_user = current_user
 
     print(f"Adding {selected_user} to the docker group...")
-    run_command(f"sudo usermod -aG docker {selected_user}")
+    success, stdout, stderr = run_command(f"sudo usermod -aG docker {selected_user}")
+    if not success:
+        print(f"Error adding {selected_user} to the docker group: {stderr}")
 
     # Restart Docker service
-    run_command("sudo systemctl restart docker")
+    success, stdout, stderr = run_command("sudo systemctl restart docker")
+    if not success:
+        print(f"Error restarting Docker service: {stderr}")
 
     print("Installation of Docker, Docker Compose, and Git completed.")
 
@@ -581,7 +592,10 @@ def step5_setup_gpt_chatbot_ui():
     if not os.path.exists("chatbot-ui"):
         user_input = input("The 'chatbot-ui' directory was not found. Do you want to download it? (y/n): ").lower()
         if user_input == "y":
-            run_command("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+            success, stdout, stderr = run_command(["git", "clone", "https://github.com/mckaywrigley/chatbot-ui.git"])
+            if not success:
+                print(f"Error: Failed to download the 'chatbot-ui' directory. Please try again.\nStdout: {stdout}\nStderr: {stderr}\n")
+                return
             if not os.path.exists("chatbot-ui"):
                 print("Error: Failed to download the 'chatbot-ui' directory. Please try again.\n")
                 return
@@ -665,8 +679,11 @@ def step5_setup_gpt_chatbot_ui():
     # Ask the user if they wish to start the services
     user_input = input("Do you want to start the services? (y/n): ").lower()
     if user_input == "y":
-        run_command("docker-compose up -d")
-        print("Services started.\n")
+        success, stdout, stderr = run_command("docker-compose up -d")
+        if success:
+            print("Services started.\n")
+        else:
+            print(f"Error starting services: {stderr}\n")
     else:
         print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
         print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
