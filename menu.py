@@ -58,12 +58,13 @@ def add_wrapped_text(text, bottom_win):
         bottom_win.addstr(line + "\n")
     bottom_win.refresh()
 
+@contextlib.contextmanager
 def curses_context(stdscr):
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
     try:
-        yield
+        yield stdscr
     finally:
         # Clean up curses
         curses.nocbreak()
@@ -82,7 +83,7 @@ def main_installation_function():
     # Initialize curses
     stdscr = curses.initscr()
 
-    with curses_context(stdscr):
+    with curses_context(stdscr) as bottom_win:
         # Divide the screen into two parts
         top_win = curses.newwin(5, curses.COLS, 0, 0)
         bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
