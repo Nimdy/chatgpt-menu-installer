@@ -44,7 +44,7 @@ def run_command_with_curses(command, bottom_win):
                 if y >= max_y - 1:
                     bottom_win.scroll(1)
                     y -= 1
-                bottom_win.addstr(y, 0, wrapped_line)
+                add_wrapped_text(y, 0, wrapped_line)
                 y += 1
             # Add a new line only after the last wrapped line
             y, x = bottom_win.getyx()
@@ -52,7 +52,7 @@ def run_command_with_curses(command, bottom_win):
                 bottom_win.scroll(1)
                 y -= 1
             else:
-                bottom_win.addstr("\n")
+                add_wrapped_text("\n")
             bottom_win.refresh()
         exit_code = stream.close()
     bottom_win.scrollok(False)
@@ -67,12 +67,12 @@ def add_wrapped_text(text, bottom_win):
         if y == max_y - 1:
             bottom_win.scroll(1)
             bottom_win.move(y, 0)
-        bottom_win.addstr(line)
+        add_wrapped_text(line)
         # Add a new line only after the last wrapped line
         if i < len(wrapped_lines) - 1:
-            bottom_win.addstr("\n")
+            add_wrapped_text("\n")
     bottom_win.refresh()
-    
+
 @contextlib.contextmanager
 def curses_context(stdscr):
     curses.noecho()
@@ -136,7 +136,7 @@ def save_domain_name_to_file(domain_name, bottom_win):
     with open(domain_name_file, "w") as f:
         f.write(domain_name)
     
-    bottom_win.addstr(f"Domain name saved to {domain_name_file}\n")
+    add_wrapped_text(f"Domain name saved to {domain_name_file}\n", bottom_win)
     bottom_win.refresh()
 
 def load_domain_name_from_file(bottom_win=None):
@@ -146,13 +146,13 @@ def load_domain_name_from_file(bottom_win=None):
     except FileNotFoundError:
         domain_name = ""
         if bottom_win:
-            bottom_win.addstr("Domain name not found. It will be set during the Nginx configuration process.\n")
+            add_wrapped_text("Domain name not found. It will be set during the Nginx configuration process.", bottom_win)
             bottom_win.refresh()
     
     return domain_name
 
 def get_user_response(prompt, bottom_win=None):
-    bottom_win.addstr(prompt)
+    add_wrapped_text(prompt)
     bottom_win.refresh()
     curses.echo()
 
@@ -165,7 +165,7 @@ def get_user_response(prompt, bottom_win=None):
             if y == max_y - 1:
                 bottom_win.move(y, 0)
             else:
-                bottom_win.addstr("\n")
+                add_wrapped_text("\n")
             bottom_win.refresh()
             curses.noecho()
 
@@ -174,7 +174,7 @@ def get_user_response(prompt, bottom_win=None):
             else:
                 return response == 'y'
         else:
-            bottom_win.addstr("Invalid input. Please enter 'y', 'n', or 'q' to quit.\n")
+            add_wrapped_text("Invalid input. Please enter 'y', 'n', or 'q' to quit.", bottom_win)
             bottom_win.refresh()
 
 def safe_system_call(cmd):
@@ -199,40 +199,40 @@ def step1_update_and_upgrade_system(bottom_win):
 
 def create_new_user(bottom_win):
     while True:
-        bottom_win.addstr("Enter a new username: ")
+        add_wrapped_text("Enter a new username: ", bottom_win)
         bottom_win.refresh()
         curses.echo()  # Enable echo
         new_username = bottom_win.getstr().decode("utf-8").strip()
         curses.noecho()  # Disable echo
 
         if not new_username:
-            bottom_win.addstr("Username cannot be empty. Please try again.\n")
+            add_wrapped_text("Username cannot be empty. Please try again.", bottom_win)
             bottom_win.refresh()
             continue
 
         exists, _, _ = safe_system_call(f"getent passwd {new_username}")
         if exists:
-            bottom_win.addstr("The provided username already exists. Please try another username.\n")
+            add_wrapped_text("The provided username already exists. Please try another username.", bottom_win)
             bottom_win.refresh()
             continue
         else:
             break
 
-    bottom_win.addstr(f"Enter the password for {new_username}: ")
+    add_wrapped_text(f"Enter the password for {new_username}: ", bottom_win)
     bottom_win.refresh()
     password = bottom_win.getstr().decode("utf-8")
     
-    bottom_win.addstr(f"Confirm the password for {new_username}: ")
+    add_wrapped_text(f"Confirm the password for {new_username}: ", bottom_win)
     bottom_win.refresh()
     confirm_password = bottom_win.getstr().decode("utf-8")
 
     while password != confirm_password:
-        bottom_win.addstr("Passwords don't match. Please try again.\n")
+        add_wrapped_text("Passwords don't match. Please try again.", bottom_win)
         bottom_win.refresh()
-        bottom_win.addstr(f"Enter the password for {new_username}: ")
+        add_wrapped_text(f"Enter the password for {new_username}: ", bottom_win)
         bottom_win.refresh()
         password = bottom_win.getstr().decode("utf-8")
-        bottom_win.addstr(f"Confirm the password for {new_username}: ")
+        add_wrapped_text(f"Confirm the password for {new_username}: ", bottom_win)
         bottom_win.refresh()
         confirm_password = bottom_win.getstr().decode("utf-8")
 
@@ -240,7 +240,7 @@ def create_new_user(bottom_win):
 
     safe_system_call(f"sudo useradd -m -p {encrypted_password} {new_username}")
     safe_system_call(f"sudo usermod -aG sudo {new_username}")
-    bottom_win.addstr(f"User {new_username} created with sudo permissions.\n")
+    add_wrapped_text(f"User {new_username} created with sudo permissions.", bottom_win)
     bottom_win.refresh()
     return new_username
 
@@ -252,21 +252,21 @@ def is_domain_publicly_visible(domain_name, bottom_win):
     try:
         domain_ip = socket.gethostbyname(domain_name)
     except socket.gaierror as e:
-        bottom_win.addstr(f"Error resolving domain: {e}\n")
+        add_wrapped_text(f"Error resolving domain: {e}", bottom_win)
         bottom_win.refresh()
         return False
 
     try:
         public_ip = requests.get("https://api64.ipify.org").text
     except requests.RequestException as e:
-        bottom_win.addstr(f"Error getting public IP: {e}\n")
+        add_wrapped_text(f"Error getting public IP: {e}", bottom_win)
         bottom_win.refresh()
         return False
 
     if domain_ip == public_ip:
         return True
     else:
-        bottom_win.addstr(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).\n")
+        add_wrapped_text(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).", bottom_win)
         bottom_win.refresh()
         return False
 
@@ -290,12 +290,12 @@ def step2_configure_nginx(bottom_win):
         add_wrapped_text("Aborted Nginx configuration.", bottom_win)
         return
 
-    bottom_win.addstr("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
+    add_wrapped_text("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ", bottom_win)
     bottom_win.refresh()
     curses.echo()  # Enable echo
     domain_name = bottom_win.getstr().strip().decode("utf-8")
     curses.noecho()  # Disable echo
-    bottom_win.addstr("\n")
+    add_wrapped_text("", bottom_win)
     bottom_win.refresh()
     bottom_win.clrtobot()  # Clear the screen from the current cursor position to the bottom
 
@@ -346,7 +346,7 @@ server {{
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
         if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): ", bottom_win):
-            bottom_win.addstr("Aborted Nginx configuration.\n")
+            add_wrapped_text("Aborted Nginx configuration.", bottom_win)
             bottom_win.refresh()
             return
 
@@ -360,8 +360,8 @@ server {{
     run_command_with_curses(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/", bottom_win)
     is_successful, _, error = safe_system_call("sudo nginx -t")
     if not is_successful:
-        bottom_win.addstr("Error: Nginx configuration test failed.\n")
-        bottom_win.addstr(error + "\n")
+        add_wrapped_text("Error: Nginx configuration test failed.", bottom_win)
+        add_wrapped_text(error + "", bottom_win)
         bottom_win.refresh()     
         print(error)
         return
@@ -370,38 +370,37 @@ server {{
         is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
 
         if is_successful:
-            bottom_win.addstr("Nginx restarted with the new configuration.\n")
+            add_wrapped_text("Nginx restarted with the new configuration.", bottom_win)
             bottom_win.refresh()
         else:
-            bottom_win.addstr("Job for nginx.service failed because the control process exited with error code.\n")
+            add_wrapped_text("Job for nginx.service failed because the control process exited with error code.", bottom_win)
             bottom_win.refresh()
             _, status_output, _ = safe_system_call("systemctl status nginx.service")
-            bottom_win.addstr("Output of 'systemctl status nginx.service':\n")
-            bottom_win.addstr(status_output + "\n")
+            add_wrapped_text("Output of 'systemctl status nginx.service':", bottom_win)
+            add_wrapped_text(status_output + "", bottom_win)
             bottom_win.refresh()
             _, journal_output, _ = safe_system_call("journalctl -xe")
-            bottom_win.addstr("Output of 'journalctl -xe':\n")
-            bottom_win.addstr(journal_output + "\n")
-            bottom_win.refresh()
+            add_wrapped_text("Output of 'journalctl -xe':", bottom_win)
+            add_wrapped_text(journal_output + "", bottom_win)
 
     else:
-        bottom_win.addstr("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.\n")
+        add_wrapped_text("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.", bottom_win)
         bottom_win.refresh()
 
     if is_certbot_installed(bottom_win):
         if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): ", bottom_win):
             step3_setup_ssl_certbot(bottom_win)
         else:
-            bottom_win.addstr("SSL setup with Certbot skipped.\n")
+            add_wrapped_text("SSL setup with Certbot skipped.", bottom_win)
             bottom_win.refresh()
     else:
         if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): ", bottom_win):
-            bottom_win.addstr("Installing Certbot...\n")
+            add_wrapped_text("Installing Certbot...", bottom_win)
             bottom_win.refresh()
             run_command_with_curses("sudo apt-get install -y certbot python3-certbot-nginx", bottom_win)
             step3_setup_ssl_certbot(bottom_win)
         else:
-            bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
+            add_wrapped_text("Certbot installation and SSL setup skipped.", bottom_win)
             bottom_win.refresh()
 
 def is_certbot_installed(bottom_win):
@@ -421,11 +420,11 @@ def step3_setup_ssl_certbot(bottom_win):
     global domain_name
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
-        bottom_win.addstr("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.\n")
+        add_wrapped_text("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.", bottom_win)
         bottom_win.refresh()
         return
 
-    bottom_win.addstr("Setting up SSL with Certbot...\n")
+    add_wrapped_text("Setting up SSL with Certbot...", bottom_win)
     bottom_win.refresh()
 
     # Check if the certificate files exist
@@ -434,29 +433,29 @@ def step3_setup_ssl_certbot(bottom_win):
         add_wrapped_text(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win)
         run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
     else:
-        bottom_win.addstr("Certificate files already exist. Skipping certificate request.\n")
+        add_wrapped_text("Certificate files already exist. Skipping certificate request.", bottom_win)
         bottom_win.refresh()
 
     # Check if Nginx configuration is valid
     config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
     if config_test_result.returncode != 0:
-        bottom_win.addstr("Nginx configuration test failed. Please fix the issues before proceeding.\n")
-        bottom_win.addstr(config_test_result.stderr + "\n")
+        add_wrapped_text("Nginx configuration test failed. Please fix the issues before proceeding.", bottom_win)
+        add_wrapped_text(config_test_result.stderr + "", bottom_win)
         bottom_win.refresh()
         return
     else:
-        bottom_win.addstr("Nginx configuration test passed. With CertBot SSL Certs applied.\n")
+        add_wrapped_text("Nginx configuration test passed. With CertBot SSL Certs applied.", bottom_win)
         bottom_win.refresh()
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
-        bottom_win.addstr("Setting up automatic certificate renewal...\n")
+        add_wrapped_text("Setting up automatic certificate renewal...", bottom_win)
         bottom_win.refresh()
         run_command_with_curses('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null', bottom_win)
     else:
-        bottom_win.addstr("Automatic certificate renewal not set up.\n")
+        add_wrapped_text("Automatic certificate renewal not set up.", bottom_win)
         bottom_win.refresh()
 
-    bottom_win.addstr("SSL setup with Certbot completed.\n")
+    add_wrapped_text("SSL setup with Certbot completed.", bottom_win)
     bottom_win.refresh()
 
 def step4_install_docker_docker_compose_git(bottom_win):
@@ -523,10 +522,10 @@ def check_docker_group_membership():
 
 def add_user_to_docker_group(bottom_win):
     user = getpass.getuser()
-    bottom_win.addstr(f"Adding {user} to the docker group...\n")
+    add_wrapped_text(f"Adding {user} to the docker group...", bottom_win)
     bottom_win.refresh()
     run_command_with_curses(f"sudo usermod -aG docker {user}", bottom_win)
-    bottom_win.addstr("User added to the docker group. Please log out and log back in for the changes to take effect.\n")
+    add_wrapped_text("User added to the docker group. Please log out and log back in for the changes to take effect.", bottom_win)
     bottom_win.refresh()
 
 def step5_setup_gpt_chatbot_ui(bottom_win):
@@ -566,17 +565,17 @@ def step5_setup_gpt_chatbot_ui(bottom_win):
 
     while True:
         for key, default_value in env_vars.items():
-            bottom_win.addstr(f"Enter {key} (default: '{default_value}'): ")
+            add_wrapped_text(f"Enter {key} (default: '{default_value}'): ", bottom_win)
             bottom_win.refresh()
             curses.echo()
             user_input = bottom_win.getstr().decode("utf-8")
             curses.noecho()
             env_vars[key] = user_input.strip() or default_value
 
-        bottom_win.addstr("\nPlease verify the entered values:\n")
+        add_wrapped_text("\nPlease verify the entered values:", bottom_win)
         bottom_win.refresh()
         for key, value in env_vars.items():
-            bottom_win.addstr(f"{key}: {value}\n")
+            add_wrapped_text(f"{key}: {value}", bottom_win)
             bottom_win.refresh()
 
         if get_user_response("\nIs the information correct? (y/n): ", bottom_win):
@@ -682,12 +681,12 @@ def download_file(url, local_path):
         print(f"Error downloading file: {e}")
 
 def add_nimdys_login_form(bottom_win):
-    bottom_win.addstr("Adding Nimdys login form...\n")
+    add_wrapped_text("Adding Nimdys login form...", bottom_win)
     bottom_win.refresh()
 
     add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ", bottom_win)
     if not add_login_form:
-        bottom_win.addstr("Aborted adding Nimdys login form.\n")
+        add_wrapped_text("Aborted adding Nimdys login form.", bottom_win)
         bottom_win.refresh()
         return
 
@@ -702,7 +701,7 @@ def add_nimdys_login_form(bottom_win):
             break
 
     if chatbot_ui_path is None:
-        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        add_wrapped_text("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.", bottom_win)
         bottom_win.refresh()
         return
 
@@ -724,7 +723,7 @@ def add_nimdys_login_form(bottom_win):
     for command in commands:
         success, stdout, stderr = safe_system_call(command)
         if not success:
-            bottom_win.addstr(f"Error executing command: {command}\n{stderr}\n")
+            add_wrapped_text(f"Error executing command: {command}\n{stderr}\n")
             bottom_win.refresh()
 
     # Take input for each var or accept defaults
@@ -739,9 +738,9 @@ def add_nimdys_login_form(bottom_win):
             user_input = input(f"Enter {key} (default: '{default_value}'): ")
             env_vars[key] = user_input.strip() or default_value
 
-        bottom_win.addstr("\nPlease verify the entered values:\n")
+        add_wrapped_text("Please verify the entered values:", bottom_win)
         for key, value in env_vars.items():
-            bottom_win.addstr(f"{key}: {value}\n")
+            add_wrapped_text(f"{key}: {value}", bottom_win)
         bottom_win.refresh()
 
         correct_info = get_user_response("\nIs the information correct? (y/n): ", bottom_win)
@@ -760,16 +759,16 @@ def add_nimdys_login_form(bottom_win):
             for key, value in env_vars.items():
                 f.write(f"{key}={value}\n")
 
-    bottom_win.addstr("Nimdys login form added.\n")
+    add_wrapped_text("Nimdys login form added.", bottom_win)
     bottom_win.refresh()
 
 def remove_nimdys_login_form(bottom_win):
-    bottom_win.addstr("Removing Nimdys login form...\n")
+    add_wrapped_text("Removing Nimdys login form...", bottom_win)
     bottom_win.refresh()
 
     remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ", bottom_win)
     if not remove_login_form:
-        bottom_win.addstr("Aborted removing Nimdys login form.\n")
+        add_wrapped_text("Aborted removing Nimdys login form.", bottom_win)
         bottom_win.refresh()
         return
 
@@ -784,7 +783,7 @@ def remove_nimdys_login_form(bottom_win):
             break
 
     if chatbot_ui_path is None:
-        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        add_wrapped_text("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.", bottom_win)
         bottom_win.refresh()
         return
 
@@ -793,7 +792,7 @@ def remove_nimdys_login_form(bottom_win):
     if os.path.exists(login_form_backup):
         shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
     else:
-        bottom_win.addstr("Warning: LoginForm.tsx backup not found. Skipping restoration.\n")
+        add_wrapped_text("Warning: LoginForm.tsx backup not found. Skipping restoration.", bottom_win)
         bottom_win.refresh()
 
     # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
@@ -801,10 +800,10 @@ def remove_nimdys_login_form(bottom_win):
     if os.path.exists(app_tsx_backup):
         shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
     else:
-        bottom_win.addstr("Warning: _app.tsx backup not found. Skipping restoration.\n")
+        add_wrapped_text("Warning: _app.tsx backup not found. Skipping restoration.", bottom_win)
         bottom_win.refresh()
 
-    bottom_win.addstr("Nimdys login form removed.\n")
+    add_wrapped_text("Nimdys login form removed.", bottom_win)
     bottom_win.refresh()
 
 def get_nginx_status():
