@@ -148,8 +148,11 @@ def check_docker_group_membership():
 def add_user_to_docker_group():
     user = getpass.getuser()
     print(f"Adding {user} to the docker group...")
-    run_command(f"sudo usermod -aG docker {user}")
-    print("User added to the docker group. Please log out and log back in for the changes to take effect.")
+    success, stdout, stderr = run_command(f"sudo usermod -aG docker {user}")
+    if success:
+        print("User added to the docker group. Please log out and log back in for the changes to take effect.")
+    else:
+        print(f"Error adding {user} to the docker group: {stderr}")
 
 def update_gpt_chatbot_ui():
     print("Checking for updates in GPT Chatbot UI...\n")
@@ -168,7 +171,9 @@ def update_gpt_chatbot_ui():
     os.chdir("chatbot-ui")
 
     # Step 3: Fetch updates from the remote repository
-    run_command("git fetch")
+    success, stdout, stderr = run_command("git fetch")
+    if not success:
+        print(f"Error fetching updates: {stderr}\n")
 
     # Step 4: Check if there are updates available
     updates_available = os.system("git diff --quiet origin/main")
@@ -177,15 +182,21 @@ def update_gpt_chatbot_ui():
         user_input = input("Do you want to update GPT Chatbot UI? (y/n): ").lower()
         if user_input == "y":
             # Step 5: Pull updates from the remote repository
-            run_command("git pull")
+            success, stdout, stderr = run_command("git pull")
+            if not success:
+                print(f"Error pulling updates: {stderr}\n")
 
             # Step 6: Shut down the old Docker image
             print("Shutting down the old Docker image...\n")
-            run_command("docker-compose down")
+            success, stdout, stderr = run_command("docker-compose down")
+            if not success:
+                print(f"Error shutting down the old Docker image: {stderr}\n")
 
             # Step 7: Create a new Docker image based on the updated docker-compose.yml file
             print("Creating a new Docker image...\n")
-            run_command("docker-compose up -d")
+            success, stdout, stderr = run_command("docker-compose up -d")
+            if not success:
+                print(f"Error creating a new Docker image: {stderr}\n")
 
             print("GPT Chatbot UI update completed.\n")
         else:
