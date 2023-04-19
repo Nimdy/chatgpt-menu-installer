@@ -135,7 +135,7 @@ def save_domain_name_to_file(domain_name, bottom_win):
     
     with open(domain_name_file, "w") as f:
         f.write(domain_name)
-    
+    bottom_win.addstr("\n")
     add_wrapped_text(f"Domain name saved to {domain_name_file}", bottom_win)
     bottom_win.addstr("\n")
     bottom_win.refresh()
