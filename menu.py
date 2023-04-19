@@ -785,6 +785,7 @@ def remove_nimdys_login_form(bottom_win):
 
     bottom_win.addstr("Nimdys login form removed.\n")
     bottom_win.refresh()
+
 def get_nginx_status():
     try:
         result = subprocess.run(['systemctl', 'is-active', 'nginx'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -799,8 +800,8 @@ def get_nginx_status():
 def get_docker_status():
     try:
         container_name = 'chatbot-ui_chatgpt'
-        result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        status = result.stdout.strip()
+        success, stdout, stderr = safe_system_call(['docker', 'ps', '-a', '--filter', f'name={container_name}', '--format', '{{.Status}}'])
+        status = stdout.strip()
 
         if status:
             return status
