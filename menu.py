@@ -10,10 +10,6 @@ import time
 import tempfile
 import getpass
 import grp
-import curses
-import textwrap
-import contextlib
-
 from termcolor import colored
 
 domain_name = None
@@ -31,152 +27,41 @@ def update_progress_file(progress_filename, step):
     with open(progress_filename, "w") as f:
         f.write(str(step))
 
-def run_command_with_curses(command, bottom_win):
-    add_wrapped_text(f"Executing command: {command}", bottom_win)
-    y, x = bottom_win.getyx()
-    max_y, max_x = bottom_win.getmaxyx()
-    bottom_win.scrollok(True)
-    exit_code = None
-    with os.popen(command) as stream:
-        for line in stream:
-            wrapped_lines = textwrap.wrap(line.strip(), max_x)
-            for i, wrapped_line in enumerate(wrapped_lines):
-                if y >= max_y - 1:
-                    bottom_win.scroll(1)
-                    y -= 1
-                bottom_win.addstr(y, 0, wrapped_line)
-                y += 1
-            # Add a new line only after the last wrapped line
-            y, x = bottom_win.getyx()
-            if y == max_y - 1:
-                bottom_win.scroll(1)
-                y -= 1
-            else:
-                bottom_win.addstr("\n")
-            bottom_win.refresh()
-        exit_code = stream.close()
-    bottom_win.scrollok(False)
-    return exit_code
 
-def add_wrapped_text(text, bottom_win):
-    max_x = bottom_win.getmaxyx()[1]
-    wrapped_lines = textwrap.wrap(text, max_x)
-    for i, line in enumerate(wrapped_lines):
-        y, x = bottom_win.getyx()
-        max_y, max_x = bottom_win.getmaxyx()
-        if y == max_y - 1:
-            bottom_win.scroll(1)
-            bottom_win.move(y, 0)
-        bottom_win.addstr(line)
-        # Add a new line only after the last wrapped line
-        if i < len(wrapped_lines) - 1:
-            bottom_win.addstr("\n")
-    bottom_win.refresh()
 
-@contextlib.contextmanager
-def curses_context(stdscr):
-    curses.noecho()
-    curses.cbreak()
-    stdscr.keypad(True)
-    try:
-        yield stdscr
-    finally:
-        # Clean up curses
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
-
-def main_installation_function():
-    progress_filename = "installation_progress.txt"
-    
-    if os.path.exists(progress_filename):
-        saved_step = read_progress_file(progress_filename)
-    else:
-        saved_step = 0
-
-    # Initialize curses
-    stdscr = curses.initscr()
-
-    with curses_context(stdscr) as bottom_win:
-        # Divide the screen into two parts
-        top_win = curses.newwin(5, curses.COLS, 0, 0)
-        bottom_win = curses.newwin(curses.LINES - 5, curses.COLS, 5, 0)
-        load_domain_name_from_file(bottom_win)
-
-        def update_step_status(step):
-            top_win.clear()
-            for i in range(1, step):
-                top_win.addstr(1, 2 + (i - 1) * 15, f"[✓] Step {i}")
-            top_win.addstr(1, 2 + (step - 1) * 15, f"[✗] Step {step}")
-            top_win.refresh()
-
-        for step in range(saved_step + 1, 6):
-            update_step_status(step)
-            if step == 1:
-                step1_update_and_upgrade_system(bottom_win)
-            elif step == 2:
-                step2_configure_nginx(bottom_win)
-            elif step == 3:
-                step3_setup_ssl_certbot(bottom_win)
-            elif step == 4:
-                step4_install_docker_docker_compose_git(bottom_win)
-            elif step == 5:
-                step5_setup_gpt_chatbot_ui(bottom_win)
-            update_progress_file(progress_filename, step)
-
-    # Remove the progress file once the installation is complete
-    if os.path.exists(progress_filename):
-        os.remove(progress_filename)
-
-def save_domain_name_to_file(domain_name, bottom_win):
+def save_domain_name_to_file(domain_name):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     domain_name_file = os.path.join(script_dir, "domain_name.txt")
     
     with open(domain_name_file, "w") as f:
         f.write(domain_name)
-    bottom_win.addstr("\n")
-    add_wrapped_text(f"Domain name saved to {domain_name_file}", bottom_win)
-    bottom_win.addstr("\n")
-    bottom_win.refresh()
+    print("\n")
+    print(f"Domain name saved to {domain_name_file}")
+    print("\n")
 
-def load_domain_name_from_file(bottom_win=None):
+def load_domain_name_from_file():
     try:
         with open("domain_name.txt", "r") as f:
             domain_name = f.read().strip()
     except FileNotFoundError:
         domain_name = ""
-        if bottom_win:
-            add_wrapped_text("Domain name not found. It will be set during the Nginx configuration process.", bottom_win)
-            bottom_win.refresh()
+        print("Domain name not found. It will be set during the Nginx configuration process.")
     
     return domain_name
 
-def get_user_response(prompt, bottom_win=None):
-    bottom_win.addstr(prompt)
-    bottom_win.refresh()
-    curses.echo()
+def get_user_response(prompt):
+    print(prompt)
 
     while True:
-        response = bottom_win.getstr().strip().decode("utf-8").lower()
+        response = input().strip().lower()
 
         if response in ['y', 'n', 'q']:
-            y, x = bottom_win.getyx()
-            max_y, max_x = bottom_win.getmaxyx()
-            if y == max_y - 1:
-                bottom_win.move(y, 0)
-            else:
-                bottom_win.addstr("\n")
-            bottom_win.refresh()
-            curses.noecho()
-
             if response == 'q':
                 raise SystemExit("User chose to quit.")
             else:
                 return response == 'y'
         else:
-            bottom_win.addstr("Invalid input. Please enter 'y', 'n', or 'q' to quit.\n")
-            bottom_win.refresh()
+            print("Invalid input. Please enter 'y', 'n', or 'q' to quit.")
 
 def safe_system_call(cmd):
     if isinstance(cmd, str):
@@ -184,228 +69,67 @@ def safe_system_call(cmd):
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
-def step1_update_and_upgrade_system(bottom_win):
-    add_wrapped_text("Updating the package list...", bottom_win)
-    run_command_with_curses("sudo apt-get update", bottom_win)
+def run_command(args):
+    try:
+        result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return True, result.stdout, result.stderr
+    except Exception as e:
+        return False, "", str(e)
 
-    add_wrapped_text("Upgrading the system...", bottom_win)
-    run_command_with_curses("sudo apt-get upgrade -y", bottom_win)
-
-    add_wrapped_text("Cleaning up unused packages...", bottom_win)
-    run_command_with_curses("sudo apt-get autoremove -y", bottom_win)
-
-    add_wrapped_text("System update and upgrade completed.", bottom_win)
-    add_wrapped_text("Please reboot the system to apply the changes.", bottom_win)
-    add_wrapped_text("After rebooting, run this script again to continue with menu option 2.", bottom_win)
-
-def create_new_user(bottom_win):
+def create_new_user():
     while True:
-        bottom_win.addstr("Enter a new username: ")
-        bottom_win.refresh()
-        curses.echo()  # Enable echo
-        new_username = bottom_win.getstr().decode("utf-8").strip()
-        curses.noecho()  # Disable echo
+        new_username = input("Enter a new username: ").strip()
 
         if not new_username:
-            bottom_win.addstr("Username cannot be empty. Please try again.\n")
-            bottom_win.refresh()
+            print("Username cannot be empty. Please try again.\n")
             continue
 
         exists, _, _ = safe_system_call(f"getent passwd {new_username}")
         if exists:
-            bottom_win.addstr("The provided username already exists. Please try another username.\n")
-            bottom_win.refresh()
+            print("The provided username already exists. Please try another username.\n")
             continue
         else:
             break
 
-    bottom_win.addstr(f"Enter the password for {new_username}: ")
-    bottom_win.refresh()
-    password = bottom_win.getstr().decode("utf-8")
-    
-    bottom_win.addstr(f"Confirm the password for {new_username}: ")
-    bottom_win.refresh()
-    confirm_password = bottom_win.getstr().decode("utf-8")
+    password = input(f"Enter the password for {new_username}: ")
+    confirm_password = input(f"Confirm the password for {new_username}: ")
 
     while password != confirm_password:
-        bottom_win.addstr("Passwords don't match. Please try again.\n")
-        bottom_win.refresh()
-        bottom_win.addstr(f"Enter the password for {new_username}: ")
-        bottom_win.refresh()
-        password = bottom_win.getstr().decode("utf-8")
-        bottom_win.addstr(f"Confirm the password for {new_username}: ")
-        bottom_win.refresh()
-        confirm_password = bottom_win.getstr().decode("utf-8")
+        print("Passwords don't match. Please try again.\n")
+        password = input(f"Enter the password for {new_username}: ")
+        confirm_password = input(f"Confirm the password for {new_username}: ")
 
     encrypted_password = subprocess.check_output(["openssl", "passwd", "-1", password], text=True).strip()
 
     safe_system_call(f"sudo useradd -m -p {encrypted_password} {new_username}")
     safe_system_call(f"sudo usermod -aG sudo {new_username}")
-    bottom_win.addstr(f"User {new_username} created with sudo permissions.\n")
-    bottom_win.refresh()
+    print(f"User {new_username} created with sudo permissions.\n")
     return new_username
 
-def check_nginx_running(bottom_win):
+def check_nginx_running():
     success, output, _ = safe_system_call("systemctl is-active nginx")
     return success and output.strip() == "active"
 
-def is_domain_publicly_visible(domain_name, bottom_win):
+def is_domain_publicly_visible(domain_name):
     try:
         domain_ip = socket.gethostbyname(domain_name)
     except socket.gaierror as e:
-        add_wrapped_text(f"Error resolving domain: {e}", bottom_win)
+        print(f"Error resolving domain: {e}")
         return False
 
     try:
         public_ip = requests.get("https://api64.ipify.org").text
     except requests.RequestException as e:
-        add_wrapped_text(f"Error getting public IP: {e}", bottom_win)
+        print(f"Error getting public IP: {e}")
         return False
 
     if domain_ip == public_ip:
         return True
     else:
-        add_wrapped_text(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).", bottom_win)
+        print(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).")
         return False
-    
-def step2_configure_nginx(bottom_win):
-    global domain_name
-    add_wrapped_text("Configuring Nginx...", bottom_win)
 
-    if not check_nginx_running(bottom_win):
-        if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): ", bottom_win):
-            add_wrapped_text("Installing Nginx...", bottom_win)
-            run_command_with_curses("sudo apt-get install -y nginx", bottom_win)
-            add_wrapped_text("Starting Nginx...", bottom_win)
-            run_command_with_curses("sudo systemctl start nginx", bottom_win)
-            bottom_win.refresh()
-            bottom_win.clrtobot() 
-        else:
-            add_wrapped_text("Please install and start Nginx before configuring.", bottom_win)
-            return
-
-    if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): ", bottom_win):
-        add_wrapped_text("Aborted Nginx configuration.", bottom_win)
-        return
-
-    bottom_win.addstr("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ")
-    bottom_win.refresh()
-    curses.echo()  # Enable echo
-    domain_name = bottom_win.getstr().strip().decode("utf-8")
-    curses.noecho()  # Disable echo
-    bottom_win.addstr("\n")
-    bottom_win.refresh()
-    bottom_win.clrtobot()  # Clear the screen from the current cursor position to the bottom
-
-    if not is_domain_publicly_visible(domain_name, bottom_win):
-        add_wrapped_text(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot. \n", bottom_win)
-        bottom_win.refresh()
-    else:
-        add_wrapped_text(f"The domain name {domain_name} is publicly visible. \n", bottom_win)
-        bottom_win.refresh()
-        save_domain_name_to_file(domain_name, bottom_win)
-
-    if not is_domain_publicly_visible(domain_name, bottom_win):
-        if not get_user_response("Do you want to continue with the configuration? (y/n): ", bottom_win):
-            bottom_win.refresh()
-            add_wrapped_text("Aborted Nginx configuration.", bottom_win)
-            return
-
-    nginx_config = f"""
-server {{
-    listen 80;
-    listen [::]:80;
-    server_name {domain_name};
-    location / {{
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_buffering off;
-    }}
-}}
-# server {{
-#     listen 443 ssl;
-#     listen [::]:443 ssl;
-#     server_name {domain_name};
-#     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-#     ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
-#     location / {{
-#         proxy_pass http://localhost:3000;
-#         proxy_http_version 1.1;
-#         proxy_set_header Upgrade $http_upgrade;
-#         proxy_set_header Connection 'upgrade';
-#         proxy_set_header Host $host;
-#         proxy_cache_bypass $http_upgrade;
-#         proxy_buffering off;
-#     }}
-# }}
-    """
-
-    sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
-    if os.path.exists(sites_available_path):
-        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): ", bottom_win):
-            bottom_win.addstr("Aborted Nginx configuration.\n")
-            bottom_win.refresh()
-            return
-
-    with tempfile.NamedTemporaryFile("w", delete=False) as f:
-        temp_path = f.name
-        f.write(nginx_config)
-
-    run_command_with_curses(f"sudo mv {temp_path} {sites_available_path}", bottom_win)
-    run_command_with_curses(f"sudo chown root:root {sites_available_path}", bottom_win)
-    run_command_with_curses(f"sudo chmod 644 {sites_available_path}", bottom_win)
-    run_command_with_curses(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/", bottom_win)
-    is_successful, _, error = safe_system_call("sudo nginx -t")
-    if not is_successful:
-        bottom_win.addstr("Error: Nginx configuration test failed.\n")
-        bottom_win.addstr(error + "\n")
-        bottom_win.refresh()     
-        print(error)
-        return
-
-    if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): ", bottom_win):
-        is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
-
-        if is_successful:
-            bottom_win.addstr("Nginx restarted with the new configuration.\n")
-            bottom_win.refresh()
-        else:
-            bottom_win.addstr("Job for nginx.service failed because the control process exited with error code.\n")
-            bottom_win.refresh()
-            _, status_output, _ = safe_system_call("systemctl status nginx.service")
-            bottom_win.addstr("Output of 'systemctl status nginx.service':\n")
-            bottom_win.addstr(status_output + "\n")
-            bottom_win.refresh()
-            _, journal_output, _ = safe_system_call("journalctl -xe")
-            bottom_win.addstr("Output of 'journalctl -xe':\n")
-            bottom_win.addstr(journal_output + "\n")
-            bottom_win.refresh()
-
-    else:
-        bottom_win.addstr("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.\n")
-        bottom_win.refresh()
-
-    if is_certbot_installed(bottom_win):
-        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): ", bottom_win):
-            step3_setup_ssl_certbot(bottom_win)
-        else:
-            bottom_win.addstr("SSL setup with Certbot skipped.\n")
-            bottom_win.refresh()
-    else:
-        if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): ", bottom_win):
-            bottom_win.addstr("Installing Certbot...\n")
-            bottom_win.refresh()
-            run_command_with_curses("sudo apt-get install -y certbot python3-certbot-nginx", bottom_win)
-            step3_setup_ssl_certbot(bottom_win)
-        else:
-            bottom_win.addstr("Certbot installation and SSL setup skipped.\n")
-            bottom_win.refresh()
-
-def is_certbot_installed(bottom_win):
+def is_certbot_installed():
     success, _, _ = safe_system_call("which certbot")
     return success
 
@@ -418,231 +142,19 @@ def is_nginx_running():
     except (socket.timeout, socket.error) as e:
         return False
 
-def step3_setup_ssl_certbot(bottom_win):
-    global domain_name
-
-    if not is_domain_publicly_visible(domain_name, bottom_win):
-        bottom_win.addstr("\n")
-        add_wrapped_text("The domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.", bottom_win)
-        return
-
-    bottom_win.addstr("\n")
-    add_wrapped_text("Setting up SSL with Certbot...", bottom_win)
-    bottom_win.addstr("\n")
-
-    # Check if the certificate files exist
-    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
-    if not os.path.exists(cert_path):
-        bottom_win.addstr("\n")
-        add_wrapped_text(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win)
-        bottom_win.addstr("\n")
-        run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
-        bottom_win.addstr("\n")
-    else:
-        bottom_win.addstr("\n")
-        add_wrapped_text("Certificate files already exist. Skipping certificate request.", bottom_win)
-        bottom_win.addstr("\n")
-
-    # Check if Nginx configuration is valid
-    config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
-    if config_test_result.returncode != 0:
-        add_wrapped_text("Nginx configuration test failed. Please fix the issues before proceeding.", bottom_win)
-        add_wrapped_text(config_test_result.stderr, bottom_win)
-        return
-    else:
-        bottom_win.addstr("\n")
-        add_wrapped_text("Nginx configuration test passed. With CertBot SSL Certs applied.", bottom_win)
-        bottom_win.addstr("\n")
-
-
-    if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
-        bottom_win.addstr("\n")
-        add_wrapped_text("Setting up automatic certificate renewal...", bottom_win)
-        bottom_win.addstr("\n")
-        run_command_with_curses('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null', bottom_win)
-        bottom_win.addstr("\n")
-
-    else:
-        bottom_win.addstr("\n")
-        add_wrapped_text("Automatic certificate renewal not set up.", bottom_win)
-
-    add_wrapped_text("SSL setup with Certbot completed.", bottom_win)
-    bottom_win.addstr("\n")
-
-def step4_install_docker_docker_compose_git(bottom_win):
-    add_wrapped_text("Installing Docker, Docker Compose, and Git...\n", bottom_win)
-
-    add_wrapped_text("Installing Git...\n", bottom_win)
-    run_command_with_curses("sudo apt-get install -y git", bottom_win)
-
-    add_wrapped_text("Installing Docker...\n", bottom_win)
-    run_command_with_curses("sudo apt-get install -y docker.io", bottom_win)
-    run_command_with_curses("sudo systemctl enable --now docker", bottom_win)
-
-    add_wrapped_text("Installing Docker Compose...\n", bottom_win)
-    run_command_with_curses("sudo apt-get install -y docker-compose", bottom_win)
-
-    current_user = getpass.getuser()
-    if current_user == "root":
-        add_wrapped_text("\nWarning: It's not recommended to run Docker as root.\nPlease choose a different user to add to the docker group:\n", bottom_win)
-
-        home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
-
-        if len(home_users) == 1 and "root" in home_users:
-            if get_user_response("No users found other than root. Do you want to create a new user? (y/n): ", bottom_win):
-                new_user = create_new_user(bottom_win)
-                home_users.append(new_user)
-            else:
-                add_wrapped_text("Aborted adding a user to the docker group.\n", bottom_win)
-                return
-
-        for idx, user in enumerate(home_users):
-            add_wrapped_text(f"{idx + 1}. {user}", bottom_win)
-
-        while True:
-            selected_user = get_user_response("\nEnter the number of the user you want to add to the docker group: ", bottom_win)
-            try:
-                selected_user = int(selected_user)
-                if 1 <= selected_user <= len(home_users):
-                    break
-                else:
-                    add_wrapped_text("Invalid selection. Please try again.", bottom_win)
-            except ValueError:
-                add_wrapped_text("Invalid input. Please enter a number.", bottom_win)
-
-        selected_user = home_users[selected_user - 1]
-        if selected_user == "root":
-            if not get_user_response("Are you sure you want to add root to the docker group? (y/n): ", bottom_win):
-                add_wrapped_text("Aborted adding root to the docker group.", bottom_win)
-                return
-    else:
-        selected_user = current_user
-
-    add_wrapped_text(f"Adding {selected_user} to the docker group...", bottom_win)
-    run_command_with_curses(f"sudo usermod -aG docker {selected_user}", bottom_win)
-
-    # Restart Docker service
-    run_command_with_curses("sudo systemctl restart docker", bottom_win)
-
-    add_wrapped_text("Installation of Docker, Docker Compose, and Git completed.", bottom_win)
-
 def check_docker_group_membership():
     user = getpass.getuser()
     group_members = grp.getgrnam("docker").gr_mem
     return user in group_members
 
-def add_user_to_docker_group(bottom_win):
+def add_user_to_docker_group():
     user = getpass.getuser()
-    bottom_win.addstr(f"Adding {user} to the docker group...\n")
-    bottom_win.refresh()
-    run_command_with_curses(f"sudo usermod -aG docker {user}", bottom_win)
-    bottom_win.addstr("User added to the docker group. Please log out and log back in for the changes to take effect.\n")
-    bottom_win.refresh()
+    print(f"Adding {user} to the docker group...")
+    run_command(f"sudo usermod -aG docker {user}")
+    print("User added to the docker group. Please log out and log back in for the changes to take effect.")
 
-def step5_setup_gpt_chatbot_ui(bottom_win):
-    add_wrapped_text("Setting up GPT Chatbot UI...\n", bottom_win)
-
-    # Step 1: Change to the appropriate directory
-    if getpass.getuser() == "root":
-        os.chdir("/opt")
-    else:
-        os.chdir(os.path.expanduser("~"))
-
-    # Step 2: Download the GitHub repo
-    run_command_with_curses("git clone https://github.com/mckaywrigley/chatbot-ui.git", bottom_win)
-
-    # Step 3: Change into the chatbot-ui directory
-    os.chdir("chatbot-ui")
-
-    # Step 4: Rename .env.local.example to .env.local
-    if os.path.exists(".env.local.example"):
-        shutil.move(".env.local.example", ".env.local")
-    else:
-        add_wrapped_text("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n", bottom_win)
-
-    # Step 5: Ask the user for input based on the following VARS
-    env_vars = {
-        "OPENAI_API_KEY": "",
-        "OPENAI_API_HOST": "https://api.openai.com",
-        "OPENAI_API_TYPE": "openai",
-        "OPENAI_API_VERSION": "2023-03-15-preview",
-        "AZURE_DEPLOYMENT_ID": "",
-        "OPENAI_ORGANIZATION": "",
-        "DEFAULT_MODEL": "gpt-3.5-turbo",
-        "NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT": "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown.",
-        "GOOGLE_API_KEY": "",
-        "GOOGLE_CSE_ID": ""
-    }
-
-    while True:
-        for key, default_value in env_vars.items():
-            bottom_win.addstr(f"Enter {key} (default: '{default_value}'): ")
-            bottom_win.refresh()
-            curses.echo()
-            user_input = bottom_win.getstr().decode("utf-8")
-            curses.noecho()
-            env_vars[key] = user_input.strip() or default_value
-
-        bottom_win.addstr("\nPlease verify the entered values:\n")
-        bottom_win.refresh()
-        for key, value in env_vars.items():
-            bottom_win.addstr(f"{key}: {value}\n")
-            bottom_win.refresh()
-
-        if get_user_response("\nIs the information correct? (y/n): ", bottom_win):
-            break
-        bottom_win.refresh()
-        curses.echo()
-        user_input = bottom_win.getstr().decode("utf-8").lower()
-        curses.noecho()
-        if user_input == "y":
-            break
-
-   # Check if the .env.local file exists
-    if os.path.exists(".env.local"):
-        if get_user_response("The .env.local file already exists. Do you want to overwrite it? (y/n): ", bottom_win):
-            # Save and overwrite the vars in the .env.local file
-            with open(".env.local", "w") as f:
-                for key, value in env_vars.items():
-                    f.write(f"{key}={value}\n")
-        else:
-            add_wrapped_text("Skipping overwriting the .env.local file.\n", bottom_win)
-    else:
-        # Create and write the vars in the .env.local file
-        with open(".env.local", "w") as f:
-            for key, value in env_vars.items():
-                f.write(f"{key}={value}\n")
-
-    # Test the docker-compose
-    add_wrapped_text("Testing the docker-compose...\n", bottom_win)
-    test_result = run_command_with_curses("docker-compose config", bottom_win)
-
-    if test_result != 0:
-        add_wrapped_text("There are errors in the docker-compose configuration. Please fix them before proceeding.\n", bottom_win)
-        return
-
-    # Check if the user is part of the Docker group
-    if not check_docker_group_membership():
-        add_wrapped_text("You need to be a member of the 'docker' group to start the services.\n", bottom_win)
-        if get_user_response("Do you want to be added to the 'docker' group? (y/n): ", bottom_win):
-            add_user_to_docker_group(bottom_win)
-            add_wrapped_text("You might have to log out and log back in, and then run the script again to start the services.\n", bottom_win)
-            return
-        else:
-            add_wrapped_text("You will need to add yourself to the 'docker' group manually to start the services.\n", bottom_win)
-
-    # Ask the user if they wish to start the services
-    if get_user_response("Do you want to start the services? (y/n): ", bottom_win):
-        run_command_with_curses("docker-compose up -d", bottom_win)
-        add_wrapped_text("Services started.\n", bottom_win)
-    else:
-        add_wrapped_text("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n", bottom_win)
-        add_wrapped_text("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n", bottom_win)
-
-    add_wrapped_text("GPT Chatbot UI setup completed.\n", bottom_win)
-
-def update_gpt_chatbot_ui(bottom_win):
-    add_wrapped_text("Checking for updates in GPT Chatbot UI...\n", bottom_win)
+def update_gpt_chatbot_ui():
+    print("Checking for updates in GPT Chatbot UI...\n")
 
     # Step 1: Change back to the user directory
     if getpass.getuser() == "root":
@@ -652,35 +164,36 @@ def update_gpt_chatbot_ui(bottom_win):
 
     # Step 2: Check if the chatbot-ui directory exists
     if not os.path.exists("chatbot-ui"):
-        add_wrapped_text("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n", bottom_win)
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
         return
 
     os.chdir("chatbot-ui")
 
     # Step 3: Fetch updates from the remote repository
-    run_command_with_curses("git fetch", bottom_win)
+    run_command("git fetch")
 
     # Step 4: Check if there are updates available
     updates_available = os.system("git diff --quiet origin/main")
     if updates_available != 0:
-        add_wrapped_text("Updates are available.\n", bottom_win)
-        if get_user_response("Do you want to update GPT Chatbot UI? (y/n): ", bottom_win):
+        print("Updates are available.\n")
+        user_input = input("Do you want to update GPT Chatbot UI? (y/n): ").lower()
+        if user_input == "y":
             # Step 5: Pull updates from the remote repository
-            run_command_with_curses("git pull", bottom_win)
+            run_command("git pull")
 
             # Step 6: Shut down the old Docker image
-            add_wrapped_text("Shutting down the old Docker image...\n", bottom_win)
-            run_command_with_curses("docker-compose down", bottom_win)
+            print("Shutting down the old Docker image...\n")
+            run_command("docker-compose down")
 
             # Step 7: Create a new Docker image based on the updated docker-compose.yml file
-            add_wrapped_text("Creating a new Docker image...\n", bottom_win)
-            run_command_with_curses("docker-compose up -d", bottom_win)
+            print("Creating a new Docker image...\n")
+            run_command("docker-compose up -d")
 
-            add_wrapped_text("GPT Chatbot UI update completed.\n", bottom_win)
+            print("GPT Chatbot UI update completed.\n")
         else:
-            add_wrapped_text("Update canceled.\n", bottom_win)
+            print("Update canceled.\n")
     else:
-        add_wrapped_text("GPT Chatbot UI is already up to date.\n", bottom_win)
+        print("GPT Chatbot UI is already up to date.\n")
 
 def download_file(url, local_path):
     try:
@@ -694,8 +207,8 @@ def download_file(url, local_path):
 def add_nimdys_login_form():
     print("Adding Nimdys login form...")
 
-    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ")
-    if not add_login_form:
+    add_login_form = input("Do you want to add Nimdys login form? (y/n): ").lower()
+    if add_login_form != "y":
         print("Aborted adding Nimdys login form.")
         return
 
@@ -768,8 +281,8 @@ def add_nimdys_login_form():
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
-    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ")
-    if not remove_login_form:
+    remove_login_form = input("Do you want to remove Nimdys login form? (y/n): ").lower()
+    if remove_login_form != "y":
         print("Aborted removing Nimdys login form.")
         return
 
@@ -802,6 +315,354 @@ def remove_nimdys_login_form():
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
+
+def main_installation_function():
+    progress_filename = "installation_progress.txt"
+    
+    if os.path.exists(progress_filename):
+        saved_step = read_progress_file(progress_filename)
+    else:
+        saved_step = 0
+
+    load_domain_name_from_file()
+
+    def update_step_status(step):
+        for i in range(1, step):
+            print(f"[✓] Step {i}", end=" ")
+        print(f"[✗] Step {step}")
+
+    for step in range(saved_step + 1, 6):
+        update_step_status(step)
+        if step == 1:
+            step1_update_and_upgrade_system()
+        elif step == 2:
+            step2_configure_nginx()
+        elif step == 3:
+            step3_setup_ssl_certbot()
+        elif step == 4:
+            step4_install_docker_docker_compose_git()
+        elif step == 5:
+            step5_setup_gpt_chatbot_ui()
+        update_progress_file(progress_filename, step)
+
+    # Remove the progress file once the installation is complete
+    if os.path.exists(progress_filename):
+        os.remove(progress_filename)
+
+def step1_update_and_upgrade_system():
+    print("Updating the package list...")
+    run_command(["sudo", "apt-get", "update"])
+
+    print("Upgrading the system...")
+    run_command(["sudo", "apt-get", "upgrade", "-y"])
+
+    print("Cleaning up unused packages...")
+    run_command(["sudo", "apt-get", "autoremove", "-y"])
+
+    print("System update and upgrade completed.")
+    print("Please reboot the system to apply the changes.")
+    print("After rebooting, run this script again to continue with menu option 2.")
+
+def step2_configure_nginx():
+    global domain_name
+    print("Configuring Nginx...")
+
+    if not check_nginx_running():
+        if get_user_response("Nginx is not running. Do you want to install and start Nginx? (y/n): "):
+            print("Installing Nginx...")
+            run_command("sudo apt-get install -y nginx")
+            print("Starting Nginx...")
+            run_command("sudo systemctl start nginx")
+        else:
+            print("Please install and start Nginx before configuring.")
+            return
+
+    if not get_user_response("Do you want to add a new domain to the Nginx configuration? (y/n): "):
+        print("Aborted Nginx configuration.")
+        return
+
+    domain_name = input("Enter the domain name (e.g., gpt.domain.com) where your GPT bot will be hosted: ").strip()
+
+    if not is_domain_publicly_visible(domain_name):
+        print(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot. \n")
+    else:
+        print(f"The domain name {domain_name} is publicly visible. \n")
+        save_domain_name_to_file(domain_name)
+
+    if not is_domain_publicly_visible(domain_name):
+        if not get_user_response("Do you want to continue with the configuration? (y/n): "):
+            print("Aborted Nginx configuration.")
+            return
+
+    nginx_config = f"""
+server {{
+    listen 80;
+    listen [::]:80;
+    server_name {domain_name};
+    location / {{
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+    }}
+}}
+# server {{
+#     listen 443 ssl;
+#     listen [::]:443 ssl;
+#     server_name {domain_name};
+#     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+#     ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
+#     location / {{
+#         proxy_pass http://localhost:3000;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection 'upgrade';
+#         proxy_set_header Host $host;
+#         proxy_cache_bypass $http_upgrade;
+#         proxy_buffering off;
+#     }}
+# }}
+    """
+
+    sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
+    if os.path.exists(sites_available_path):
+        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): "):
+            print("Aborted Nginx configuration.")
+            return
+
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        temp_path = f.name
+        f.write(nginx_config)
+
+    run_command(f"sudo mv {temp_path} {sites_available_path}")
+    run_command(f"sudo chown root:root {sites_available_path}")
+    run_command(f"sudo chmod 644 {sites_available_path}")
+    run_command(f"sudo ln -sf /etc/nginx/sites-available/{domain_name} /etc/nginx/sites-enabled/")
+    is_successful, _, error = safe_system_call("sudo nginx -t")
+    if not is_successful:
+        print("Error: Nginx configuration test failed.")
+        print(error)
+        return
+
+    if get_user_response("The Nginx configuration was verified. Do you want to restart Nginx? (y/n): "):
+        is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
+
+        if is_successful:
+            print("Nginx restarted with the new configuration.")
+        else:
+            print("Job for nginx.service failed because the control process exited with error code.")
+            _, status_output, _ = safe_system_call("systemctl status nginx.service")
+            print("Output of 'systemctl status nginx.service':")
+            print(status_output)
+            _, journal_output, _ = safe_system_call("journalctl -xe")
+            print("Output of 'journalctl -xe':")
+            print(journal_output)
+
+    else:
+        print("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.")
+
+    if is_certbot_installed():
+        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): "):
+            step3_setup_ssl_certbot()
+        else:
+            print("SSL setup with Certbot skipped.")
+    else:
+        if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): "):
+            print("Installing Certbot...")
+            run_command("sudo apt-get install -y certbot python3-certbot-nginx")
+            step3_setup_ssl_certbot()
+        else:
+            print("Certbot installation and SSL setup skipped.")
+
+def step3_setup_ssl_certbot():
+    global domain_name
+
+    if not is_domain_publicly_visible(domain_name):
+        print("\nThe domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.")
+        return
+
+    print("\nSetting up SSL with Certbot...\n")
+
+    # Check if the certificate files exist
+    cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
+    if not os.path.exists(cert_path):
+        print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
+        run_command(f"sudo certbot --nginx -d {domain_name}")
+        print("\n")
+    else:
+        print("\nCertificate files already exist. Skipping certificate request.\n")
+
+    # Check if Nginx configuration is valid
+    config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
+    if config_test_result.returncode != 0:
+        print("Nginx configuration test failed. Please fix the issues before proceeding.")
+        print(config_test_result.stderr)
+        return
+    else:
+        print("\nNginx configuration test passed. With CertBot SSL Certs applied.\n")
+
+    if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
+        print("\nSetting up automatic certificate renewal...\n")
+        run_command('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null')
+        print("\n")
+    else:
+        print("\nAutomatic certificate renewal not set up.\n")
+
+    print("SSL setup with Certbot completed.\n")
+
+def step4_install_docker_docker_compose_git():
+    print("Installing Docker, Docker Compose, and Git...\n")
+
+    print("Installing Git...\n")
+    run_command("sudo apt-get install -y git")
+
+    print("Installing Docker...\n")
+    run_command("sudo apt-get install -y docker.io")
+    run_command("sudo systemctl enable --now docker")
+
+    print("Installing Docker Compose...\n")
+    run_command("sudo apt-get install -y docker-compose")
+
+    current_user = getpass.getuser()
+    if current_user == "root":
+        print("\nWarning: It's not recommended to run Docker as root.\nPlease choose a different user to add to the docker group:\n")
+
+        home_users = [d for d in os.listdir('/home') if os.path.isdir(os.path.join('/home', d))]
+
+        if len(home_users) == 1 and "root" in home_users:
+            if get_user_response("No users found other than root. Do you want to create a new user? (y/n): "):
+                new_user = create_new_user()
+                home_users.append(new_user)
+            else:
+                print("Aborted adding a user to the docker group.\n")
+                return
+
+        for idx, user in enumerate(home_users):
+            print(f"{idx + 1}. {user}")
+
+        while True:
+            selected_user = input("\nEnter the number of the user you want to add to the docker group: ")
+            try:
+                selected_user = int(selected_user)
+                if 1 <= selected_user <= len(home_users):
+                    break
+                else:
+                    print("Invalid selection. Please try again.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        selected_user = home_users[selected_user - 1]
+        if selected_user == "root":
+            if not get_user_response("Are you sure you want to add root to the docker group? (y/n): "):
+                print("Aborted adding root to the docker group.")
+                return
+    else:
+        selected_user = current_user
+
+    print(f"Adding {selected_user} to the docker group...")
+    run_command(f"sudo usermod -aG docker {selected_user}")
+
+    # Restart Docker service
+    run_command("sudo systemctl restart docker")
+
+    print("Installation of Docker, Docker Compose, and Git completed.")
+
+def step5_setup_gpt_chatbot_ui():
+    print("Setting up GPT Chatbot UI...\n")
+
+    # Step 1: Change to the appropriate directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
+
+    # Step 2: Download the GitHub repo
+    run_command("git clone https://github.com/mckaywrigley/chatbot-ui.git")
+
+    # Step 3: Change into the chatbot-ui directory
+    os.chdir("chatbot-ui")
+
+    # Step 4: Rename .env.local.example to .env.local
+    if os.path.exists(".env.local.example"):
+        shutil.move(".env.local.example", ".env.local")
+    else:
+        print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n")
+
+    # Step 5: Ask the user for input based on the following VARS
+    env_vars = {
+        "OPENAI_API_KEY": "",
+        "OPENAI_API_HOST": "https://api.openai.com",
+        "OPENAI_API_TYPE": "openai",
+        "OPENAI_API_VERSION": "2023-03-15-preview",
+        "AZURE_DEPLOYMENT_ID": "",
+        "OPENAI_ORGANIZATION": "",
+        "DEFAULT_MODEL": "gpt-3.5-turbo",
+        "NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT": "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown.",
+        "GOOGLE_API_KEY": "",
+        "GOOGLE_CSE_ID": ""
+    }
+
+    while True:
+        for key, default_value in env_vars.items():
+            user_input = input(f"Enter {key} (default: '{default_value}'): ")
+            env_vars[key] = user_input.strip() or default_value
+
+        print("\nPlease verify the entered values:")
+        for key, value in env_vars.items():
+            print(f"{key}: {value}")
+
+        user_input = input("\nIs the information correct? (y/n): ").lower()
+        if user_input == "y":
+            break
+
+    # Check if the .env.local file exists
+    if os.path.exists(".env.local"):
+        user_input = input("The .env.local file already exists. Do you want to overwrite it? (y/n): ").lower()
+        if user_input == "y":
+            # Save and overwrite the vars in the .env.local file
+            with open(".env.local", "w") as f:
+                for key, value in env_vars.items():
+                    f.write(f"{key}={value}\n")
+        else:
+            print("Skipping overwriting the .env.local file.\n")
+    else:
+        # Create and write the vars in the .env.local file
+        with open(".env.local", "w") as f:
+            for key, value in env_vars.items():
+                f.write(f"{key}={value}\n")
+
+    # Test the docker-compose
+    print("Testing the docker-compose...\n")
+    test_result = run_command("docker-compose config")
+
+    if test_result != 0:
+        print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        return
+
+    # Check if the user is part of the Docker group
+    if not check_docker_group_membership():
+        print("You need to be a member of the 'docker' group to start the services.\n")
+        user_input = input("Do you want to be added to the 'docker' group? (y/n): ").lower()
+        if user_input == "y":
+            add_user_to_docker_group()
+            print("You might have to log out and log back in, and then run the script again to start the services.\n")
+            return
+        else:
+            print("You will need to add yourself to the 'docker' group manually to start the services.\n")
+
+    # Ask the user if they wish to start the services
+    user_input = input("Do you want to start the services? (y/n): ").lower()
+    if user_input == "y":
+        run_command("docker-compose up -d")
+        print("Services started.\n")
+    else:
+        print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
+        print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
+
+    print("GPT Chatbot UI setup completed.\n")
 
 def get_nginx_status():
     try:
