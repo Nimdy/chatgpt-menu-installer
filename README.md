@@ -2,7 +2,9 @@
 
 Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
 
-DO NOT USE STILL Cleaned up a lot of code - just working through some random issues- 4/18/2023 1830 MST
+DO NOT USE STILL Cleaned up a lot of code - just working through some random issues- 4/18/2023 1930 MST
+
+python formating of displaying information is all I have left... 
 
 ALMOST DONE!!
 
