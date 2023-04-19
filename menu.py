@@ -428,16 +428,20 @@ def step3_setup_ssl_certbot(bottom_win):
 
     bottom_win.addstr("\n")
     add_wrapped_text("Setting up SSL with Certbot...", bottom_win)
+    bottom_win.addstr("\n")
 
     # Check if the certificate files exist
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
+        bottom_win.addstr("\n")
         add_wrapped_text(f"Certificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...", bottom_win)
         bottom_win.addstr("\n")
         run_command_with_curses(f"sudo certbot --nginx -d {domain_name}", bottom_win)
+        bottom_win.addstr("\n")
     else:
         bottom_win.addstr("\n")
         add_wrapped_text("Certificate files already exist. Skipping certificate request.", bottom_win)
+        bottom_win.addstr("\n")
 
     # Check if Nginx configuration is valid
     config_test_result = subprocess.run(["sudo", "nginx", "-t"], capture_output=True, text=True)
@@ -448,17 +452,22 @@ def step3_setup_ssl_certbot(bottom_win):
     else:
         bottom_win.addstr("\n")
         add_wrapped_text("Nginx configuration test passed. With CertBot SSL Certs applied.", bottom_win)
+        bottom_win.addstr("\n")
+
 
     if get_user_response("Do you want to automatically renew SSL certificates? (y/n): ", bottom_win):
         bottom_win.addstr("\n")
         add_wrapped_text("Setting up automatic certificate renewal...", bottom_win)
         bottom_win.addstr("\n")
         run_command_with_curses('echo "0 5 * * * /usr/bin/certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null', bottom_win)
+        bottom_win.addstr("\n")
+
     else:
         bottom_win.addstr("\n")
         add_wrapped_text("Automatic certificate renewal not set up.", bottom_win)
 
     add_wrapped_text("SSL setup with Certbot completed.", bottom_win)
+    bottom_win.addstr("\n")
 
 def step4_install_docker_docker_compose_git(bottom_win):
     add_wrapped_text("Installing Docker, Docker Compose, and Git...\n", bottom_win)
