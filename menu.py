@@ -67,10 +67,10 @@ def add_wrapped_text(text, bottom_win):
         if y == max_y - 1:
             bottom_win.scroll(1)
             bottom_win.move(y, 0)
-        add_wrapped_text(line)
+        bottom_win.addstr(line)
         # Add a new line only after the last wrapped line
         if i < len(wrapped_lines) - 1:
-            add_wrapped_text("\n")
+            bottom_win.addstr("\n")
     bottom_win.refresh()
 
 @contextlib.contextmanager
