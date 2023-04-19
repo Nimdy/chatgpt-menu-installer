@@ -297,10 +297,10 @@ def step2_configure_nginx(bottom_win):
     bottom_win.clrtobot()  # Clear the screen from the current cursor position to the bottom
 
     if not is_domain_publicly_visible(domain_name, bottom_win):
-        add_wrapped_text(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot.", bottom_win)
+        add_wrapped_text(f"Warning: The domain name {domain_name} either does not resolve in the global DNS or does not resolve to the public IP address. This might cause issues with Certbot. \n", bottom_win)
         bottom_win.refresh()
     else:
-        add_wrapped_text(f"The domain name {domain_name} is publicly visible.", bottom_win)
+        add_wrapped_text(f"The domain name {domain_name} is publicly visible. \n", bottom_win)
         bottom_win.refresh()
         save_domain_name_to_file(domain_name, bottom_win)
 
@@ -345,7 +345,7 @@ server {{
 
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
     if os.path.exists(sites_available_path):
-        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): ", bottom_win):
+        if not get_user_response(f"Nginx configuration for domain {domain_name} already exists. Do you want to overwrite it? (y/n): \n ", bottom_win):
             bottom_win.addstr("Aborted Nginx configuration.\n")
             bottom_win.refresh()
             return
