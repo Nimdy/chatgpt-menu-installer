@@ -252,24 +252,21 @@ def is_domain_publicly_visible(domain_name, bottom_win):
     try:
         domain_ip = socket.gethostbyname(domain_name)
     except socket.gaierror as e:
-        bottom_win.addstr(f"Error resolving domain: {e}\n")
-        bottom_win.refresh()
+        add_wrapped_text(f"Error resolving domain: {e}", bottom_win)
         return False
 
     try:
         public_ip = requests.get("https://api64.ipify.org").text
     except requests.RequestException as e:
-        bottom_win.addstr(f"Error getting public IP: {e}\n")
-        bottom_win.refresh()
+        add_wrapped_text(f"Error getting public IP: {e}", bottom_win)
         return False
 
     if domain_ip == public_ip:
         return True
     else:
-        bottom_win.addstr(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).\n")
-        bottom_win.refresh()
+        add_wrapped_text(f"Domain IP ({domain_ip}) does not match public IP ({public_ip}).", bottom_win)
         return False
-
+    
 def step2_configure_nginx(bottom_win):
     global domain_name
     add_wrapped_text("Configuring Nginx...", bottom_win)
@@ -673,14 +670,12 @@ def download_file(url, local_path):
     except requests.exceptions.RequestException as e:
         print(f"Error downloading file: {e}")
 
-def add_nimdys_login_form(bottom_win):
-    bottom_win.addstr("Adding Nimdys login form...\n")
-    bottom_win.refresh()
+def add_nimdys_login_form():
+    print("Adding Nimdys login form...")
 
-    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ", bottom_win)
+    add_login_form = get_user_response("Do you want to add Nimdys login form? (y/n): ")
     if not add_login_form:
-        bottom_win.addstr("Aborted adding Nimdys login form.\n")
-        bottom_win.refresh()
+        print("Aborted adding Nimdys login form.")
         return
 
     # Check if the chatbot-ui directory exists in the user's home directory or /opt/
@@ -694,8 +689,7 @@ def add_nimdys_login_form(bottom_win):
             break
 
     if chatbot_ui_path is None:
-        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
-        bottom_win.refresh()
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
         return
 
     # Download and add LoginForm.tsx to chatbot-ui/Settings/
@@ -714,10 +708,7 @@ def add_nimdys_login_form(bottom_win):
     response = requests.get("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/addlibs.txt")
     commands = response.text.splitlines()
     for command in commands:
-        success, stdout, stderr = safe_system_call(command)
-        if not success:
-            bottom_win.addstr(f"Error executing command: {command}\n{stderr}\n")
-            bottom_win.refresh()
+        os.system(command)
 
     # Take input for each var or accept defaults
     env_vars = {
@@ -731,12 +722,11 @@ def add_nimdys_login_form(bottom_win):
             user_input = input(f"Enter {key} (default: '{default_value}'): ")
             env_vars[key] = user_input.strip() or default_value
 
-        bottom_win.addstr("\nPlease verify the entered values:\n")
+        print("\nPlease verify the entered values:")
         for key, value in env_vars.items():
-            bottom_win.addstr(f"{key}: {value}\n")
-        bottom_win.refresh()
+            print(f"{key}: {value}")
 
-        correct_info = get_user_response("\nIs the information correct? (y/n): ", bottom_win)
+        correct_info = get_user_response("\nIs the information correct? (y/n): ")
         if correct_info:
             break
 
@@ -752,17 +742,14 @@ def add_nimdys_login_form(bottom_win):
             for key, value in env_vars.items():
                 f.write(f"{key}={value}\n")
 
-    bottom_win.addstr("Nimdys login form added.\n")
-    bottom_win.refresh()
+    print("Nimdys login form added.")
 
-def remove_nimdys_login_form(bottom_win):
-    bottom_win.addstr("Removing Nimdys login form...\n")
-    bottom_win.refresh()
+def remove_nimdys_login_form():
+    print("Removing Nimdys login form...")
 
-    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ", bottom_win)
+    remove_login_form = get_user_response("Do you want to remove Nimdys login form? (y/n): ")
     if not remove_login_form:
-        bottom_win.addstr("Aborted removing Nimdys login form.\n")
-        bottom_win.refresh()
+        print("Aborted removing Nimdys login form.")
         return
 
     # Check if the chatbot-ui directory exists in the user's home directory or /opt/
@@ -776,8 +763,7 @@ def remove_nimdys_login_form(bottom_win):
             break
 
     if chatbot_ui_path is None:
-        bottom_win.addstr("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
-        bottom_win.refresh()
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
         return
 
     # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
@@ -785,19 +771,16 @@ def remove_nimdys_login_form(bottom_win):
     if os.path.exists(login_form_backup):
         shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
     else:
-        bottom_win.addstr("Warning: LoginForm.tsx backup not found. Skipping restoration.\n")
-        bottom_win.refresh()
+        print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
 
     # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
     app_tsx_backup = os.path.join(chatbot_ui_path, "pages/_app.tsx.bak")
     if os.path.exists(app_tsx_backup):
         shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
     else:
-        bottom_win.addstr("Warning: _app.tsx backup not found. Skipping restoration.\n")
-        bottom_win.refresh()
+        print("Warning: _app.tsx backup not found. Skipping restoration.")
 
-    bottom_win.addstr("Nimdys login form removed.\n")
-    bottom_win.refresh()
+    print("Nimdys login form removed.")
 
 def get_nginx_status():
     try:
