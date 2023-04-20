@@ -151,7 +151,7 @@ def check_docker_group_membership():
 def add_user_to_docker_group():
     user = getpass.getuser()
     print(f"Adding {user} to the docker group...")
-    success, stdout, stderr = run_command(f"sudo usermod -aG docker {user}")
+    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", user])
     if success:
         print("User added to the docker group. Please log out and log back in for the changes to take effect.")
     else:
@@ -694,7 +694,7 @@ def step5_setup_gpt_chatbot_ui():
     # Ask the user if they wish to start the services
     user_input = input("Do you want to start the services? (y/n): ").lower()
     if user_input == "y":
-        success, stdout, stderr = run_command("docker-compose up -d")
+        success, stdout, stderr = run_command(["docker-compose", "up", "-d"])
         if success:
             print("Services started.\n")
         else:
