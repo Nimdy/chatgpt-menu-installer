@@ -108,7 +108,10 @@ def check_nginx_running():
     success, output, _ = safe_system_call("systemctl is-active nginx")
     return success and output.strip() == "active"
 
-def is_domain_publicly_visible(domain_name):
+def is_domain_publicly_visible(domain_name=None):
+    if domain_name is None:
+        domain_name = load_domain_name_from_file()
+
     try:
         domain_ip = socket.gethostbyname(domain_name)
     except socket.gaierror as e:
