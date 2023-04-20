@@ -207,6 +207,20 @@ def update_gpt_chatbot_ui():
     else:
         print("GPT Chatbot UI is already up to date.\n")
 
+def run_certbot_command(args, stdin=None):
+    try:
+        with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            while True:
+                output = proc.stdout.readline()
+                if output:
+                    print(output.strip())
+                else:
+                    break
+            proc.wait()
+            return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
+    except Exception as e:
+        return False, "", str(e)
+
 def download_file(url, local_path):
     try:
         response = requests.get(url)
@@ -508,7 +522,7 @@ def step3_setup_ssl_certbot():
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
-        success, stdout, stderr = run_command(["sudo", "certbot", "--nginx", "-d", domain_name], stdin=None, stdout=None)
+        success, stdout, stderr = run_certbot_command(["sudo", "certbot", "--nginx", "-d", domain_name], stdin=None)
         print("\n")
     else:
         print("\nCertificate files already exist. Skipping certificate request.\n")
