@@ -10,6 +10,7 @@ import time
 import tempfile
 import getpass
 import grp
+import pty
 from termcolor import colored
 
 domain_name = None
@@ -223,7 +224,14 @@ def run_certbot_command(args, stdin=None):
             return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
     except Exception as e:
         return False, "", str(e)
-    
+
+def run_certbot_command_pty(args):
+    try:
+        exit_code = pty.spawn(args)
+        return exit_code == 0
+    except Exception as e:
+        return False
+
 def download_file(url, local_path):
     try:
         response = requests.get(url)
@@ -525,7 +533,7 @@ def step3_setup_ssl_certbot():
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
-        success, stdout, stderr = run_certbot_command(["sudo", "certbot", "--nginx", "-d", domain_name], stdin=None)
+        success = run_certbot_command_pty(["sudo", "certbot", "--nginx", "-d", domain_name])
         print("\n")
     else:
         print("\nCertificate files already exist. Skipping certificate request.\n")
