@@ -673,7 +673,7 @@ def step5_setup_gpt_chatbot_ui():
 
     # Test the docker-compose
     print("Testing the docker-compose...\n")
-    success, stdout, stderr = run_command("docker-compose config")
+    success, stdout, stderr = run_command(["docker-compose", "config"])
 
     if not success:
         print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
