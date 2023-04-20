@@ -59,17 +59,10 @@ sudo adduser UserNameYouWant
 usermod -aG sudo UserNameYouWant
 ```
 
-3. Edit the sudoers file:
+3. Switch to UserNameYouWant
 ```
-visudo
+su UserNameYouWant
 ```
-- Add the following line:
-```
-UserNameYouWant ALL=(ALL:ALL) ALL
-```
-
-4. Save file and continue
-
 
 ## Installation Steps
 
