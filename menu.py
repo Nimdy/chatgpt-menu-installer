@@ -211,16 +211,19 @@ def run_certbot_command(args, stdin=None):
     try:
         with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
             while True:
-                output = proc.stdout.readline()
-                if output:
-                    print(output.strip())
+                stdout_output = proc.stdout.readline()
+                stderr_output = proc.stderr.readline()
+                if stdout_output:
+                    print(stdout_output.strip())
+                elif stderr_output:
+                    print(stderr_output.strip())
                 else:
                     break
             proc.wait()
             return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
     except Exception as e:
         return False, "", str(e)
-
+    
 def download_file(url, local_path):
     try:
         response = requests.get(url)
