@@ -673,10 +673,11 @@ def step5_setup_gpt_chatbot_ui():
 
     # Test the docker-compose
     print("Testing the docker-compose...\n")
-    test_result = run_command("docker-compose config")
+    success, stdout, stderr = run_command("docker-compose config")
 
-    if test_result != 0:
+    if not success:
         print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        print(f"Stdout: {stdout}\nStderr: {stderr}\n")
         return
 
     # Check if the user is part of the Docker group
