@@ -2,9 +2,17 @@
 
 Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
 
-DO NOT USE STILL Cleaned up a lot of code - just working through some random issues- 4/18/2023 1930 MST
 
-python formating of displaying information is all I have left... 
+## Ready for Testing
+Installation script works 100% - On a clean VPS with the VPS domain name assigned to a public IP - 4/20/2023 1500 MST
+
+Working on the installation of the login form - This will need to overwrite the core files of:
+
+Add - LoginForm.tsx
+Edit - _app.tsx
+Edit - package.json
+Add - .env.production for the USERNAME, PASSWORD and Bypass Login Form settings
+
 
 ALMOST DONE!!
 
@@ -27,12 +35,26 @@ Like all of my menu-based installers, this one includes additional steps that co
 - Checks for updates to McKay Wrigley's Chatbot UI and applies them
 - Launches Chatbot UI
 
+## Steps:
+1. Updates and Upgrades VPS
+2. Install Nginx
+3. Takes input for the domain you wish to have
+4. Configures Nginx based on your domain name settings and proxy forwards 3000(Chatbot UI) to 443(Public Facing Access)
+5. Installs Certbot
+6. Takes your cert details and configures them to Nginx
+7. Downloads Mckay Wrigley's Chatbot UI
+8. Takes your VAR inputs for API keys and Prompts - Defaults if no input is provided
+9. Build Docker Image based on input
+10. Starts Docker Image and is ready for interactions
+
+- Adding plugin flow for LoginForm soon
+
 **To-Do:**
 
 - [X] Complete Seperate Function Files
 - [X] Take all function files and combine them into one menu
-- [ ] Validate functionality
-- [ ] Improve user interface design
+- [X] Validate functionality
+- [ ] Validate plugin install
 - [ ] Add ability to load and unload plugins on demand
 
 ## Compatibility
