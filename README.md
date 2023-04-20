@@ -81,7 +81,7 @@ sudo apt upgrade
 sudo reboot
 ```
 
-# After the system reboots login with your new user account you created before continuing
+## After the system reboots login with your new user account you created before continuing
 
 4. Install Python 3:
 ```
