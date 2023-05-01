@@ -35,6 +35,14 @@ Like all of my menu-based installers, this one includes additional steps that co
 - Checks for updates to McKay Wrigley's Chatbot UI and applies them
 - Launches Chatbot UI
 
+## On demand Features for Login Form install:
+1. Build another Docker Image using Node and JSON Web Token
+2. Add LoginForm to components/Settings/LoginForm.tsx 
+3. Replace pages/_app.tsx and with code needed for interaction with LoginForm.tsx
+4. Create utils/app/auth.ts for storing and removing access session token
+5. Adds axios and formik to package.json
+6. Rebuilds ChatbotUI Docker Image and implements required changes for Login Form function.
+
 ## Steps:
 1. Updates and Upgrades VPS
 2. Install Nginx
@@ -47,13 +55,6 @@ Like all of my menu-based installers, this one includes additional steps that co
 9. Build Docker Image based on input
 10. Starts Docker Image and is ready for interactions
 
-## Login Form Features
-1. Build another Docker Image using Node and JSON Web Token
-2. Add LoginForm to components/Settings/LoginForm.tsx 
-3. Replace pages/_app.tsx and with code needed for interaction with LoginForm.tsx
-4. Create utils/app/auth.ts for storing and removing access session token
-5. Adds axios and formik to package.json
-6. Rebuilds ChatbotUI Docker Image and implements required changes for Login Form function.
 
 
 **To-Do:**

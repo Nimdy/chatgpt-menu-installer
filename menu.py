@@ -901,6 +901,7 @@ def print_menu():
     print(colored("4. Remove Nimdys Login Form", "green"))
     print(colored("5. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
+    print(colored("43. Testing Plugin Inject", "green")
     print(colored("0. Exit", "green"))
 
 def main():
@@ -933,6 +934,8 @@ def main():
             check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
+        elif choice == "43":
+            add_formik_and_axios()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
