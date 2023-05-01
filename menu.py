@@ -765,6 +765,106 @@ def add_formik_and_axios():
 
     print("Formik and Axios added to package.json successfully.")
 
+    # Run the function to update the Dockerfile
+    print("Updating the Chatbot-UI Dockerfile to allow updating of the package-lock.json file...")
+    update_chatbotui_dockerfile()
+
+def update_chatbotui_dockerfile():
+    # Step 1: Change back to the user directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
+
+    # Step 2: Check if the chatbot-ui directory exists
+    if not os.path.exists("chatbot-ui"):
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        return
+
+    os.chdir("chatbot-ui")
+
+    # Step 3: Read the Dockerfile
+    with open("Dockerfile", "r") as file:
+        dockerfile_content = file.readlines()
+
+    # Step 4: Update the Dockerfile content
+    for i, line in enumerate(dockerfile_content):
+        if line.strip() == "FROM base AS dependencies":
+            dockerfile_content[i + 1] = "RUN npm update && \\\n    npm ci\n"
+
+    # Step 5: Write the updated content to the Dockerfile
+    with open("Dockerfile", "w") as file:
+        file.writelines(dockerfile_content)
+
+    print("Dockerfile has been updated successfully.")
+
+def nginx_config_update():
+    def find_nginx_config_directory():
+        default_path = '/etc/nginx/sites-available'
+        if os.path.exists(default_path):
+            return default_path
+        else:
+            result = subprocess.run(['find', '/', '-type', 'd', '-name', 'sites-available'], capture_output=True)
+            if result.stdout:
+                return result.stdout.decode('utf-8').strip()
+            else:
+                raise FileNotFoundError("Nginx configuration directory not found.")
+
+    def get_domains_from_config(config_directory):
+        config_files = glob.glob(os.path.join(config_directory, '*'))
+        domains = []
+        for config_file in config_files:
+            with open(config_file, 'r') as f:
+                config = f.read()
+            domains += re.findall(r'server_name\s+(.*?);', config)
+        return domains
+
+    def select_domain(domains):
+        print("Available domains:")
+        for i, domain in enumerate(domains):
+            print(f"{i + 1}. {domain}")
+        choice = int(input("Select a domain by entering its number: "))
+        return domains[choice - 1]
+
+    def inject_location_block(config_directory, domain, new_config_block):
+        config_files = glob.glob(os.path.join(config_directory, '*'))
+        for config_file in config_files:
+            with open(config_file, 'r') as f:
+                config = f.read()
+            domain_config = re.search(r'(server\s*{[^}]*server_name\s+' + domain + r';[^}]*})', config)
+            if domain_config:
+                updated_domain_config = domain_config.group(1) + new_config_block + '\n}'
+                config = config.replace(domain_config.group(1), updated_domain_config)
+                with open(config_file, 'w') as f:
+                    f.write(config)
+                return True
+        return False
+
+    def restart_nginx():
+        subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
+
+    config_directory = find_nginx_config_directory()
+    new_config_block = '''
+    location /api/jwt/ {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+    }
+    '''
+
+    domains = get_domains_from_config(config_directory)
+    selected_domain = select_domain(domains)
+    if inject_location_block(config_directory, selected_domain, new_config_block):
+        print(f"Location block injected for domain: {selected_domain}")
+        restart_nginx()
+        print("Nginx service restarted.")
+    else:
+        print("Failed to inject location block.")
+
 def add_nimdys_login_form():
     print("Adding Nimdys login form...")
 
@@ -879,7 +979,6 @@ def remove_nimdys_login_form():
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
-
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))

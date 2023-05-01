@@ -24,7 +24,7 @@ app.post('/api/authenticate', (req, res) => {
   const mockPassword = process.env.JWT_PASSWORD;
   
   if (username === mockUsername && password === mockPassword) {
-    const token = jwt.sign({username}, process.env.NEXT_PUBLIC_JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({username}, process.env.JWT_SECRET, { expiresIn: '1d' });
     return res.json({
       success: true,
       message: 'Authentication successful!',

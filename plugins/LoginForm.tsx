@@ -15,7 +15,7 @@ export default function LoginForm({ onLoginSuccess }: Props) {
     if (token) {
       axios
         .post(
-          '/api/validate',
+          '/api/jwt/validate',
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -31,7 +31,7 @@ export default function LoginForm({ onLoginSuccess }: Props) {
   const handleSubmit = async (values: { username: string; password: string }) => {
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/authenticate', values);
+      const response = await axios.post('/api/jwt/authenticate', values);
       const { token } = response.data;
       localStorage.setItem('token', token);
       onLoginSuccess(token);
