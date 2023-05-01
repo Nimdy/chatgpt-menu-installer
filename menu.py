@@ -901,7 +901,7 @@ def print_menu():
     print(colored("4. Remove Nimdys Login Form", "green"))
     print(colored("5. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
-    print(colored("43. Testing Plugin Inject", "green")
+    print(colored("43. Testing Plugin Inject", "green"))
     print(colored("0. Exit", "green"))
 
 def main():
