@@ -20,4 +20,4 @@ ENV NEXT_PUBLIC_JWT_SECRET=your-jwt-secret
 EXPOSE 3000
 
 # Start the application by running index.js
-CMD ["node", "/app/index.js"]
+CMD ["node", "app/index.js"]
