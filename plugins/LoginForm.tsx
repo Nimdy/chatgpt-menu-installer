@@ -15,7 +15,7 @@ export default function LoginForm({ onLoginSuccess }: Props) {
     if (token) {
       axios
         .post(
-          'http://localhost:3001/api/validate',
+          '/api/validate',
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -31,7 +31,7 @@ export default function LoginForm({ onLoginSuccess }: Props) {
   const handleSubmit = async (values: { username: string; password: string }) => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/authenticate', values);
+      const response = await axios.post('/api/authenticate', values);
       const { token } = response.data;
       localStorage.setItem('token', token);
       onLoginSuccess(token);

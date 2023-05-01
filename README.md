@@ -2,6 +2,7 @@
 
 Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
 
+**WORKING LOGINFORM DONT INSTALL PLUGIN YET EVERYTHING ELSE WORKS THOUGH**
 
 ## Ready for Testing
 Installation script works 100% - On a clean VPS with the VPS domain name assigned to a public IP - 4/20/2023 1500 MST
