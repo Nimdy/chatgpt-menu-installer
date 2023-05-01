@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  jwt-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment: 
+      - NEXT_PUBLIC_JWT_SECRET=your-jwt-secret
+    volumes:
+      - .:/app
+      - /app/node_modules
