@@ -6,8 +6,14 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Configure the CORS middleware to allow requests from the same origin
+const corsOptions = {
+  origin: true,
+  credentials: true,
+};
+
+// Use the CORS middleware with the configured options
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 app.post('/api/authenticate', (req, res) => {
