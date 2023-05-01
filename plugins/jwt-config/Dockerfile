@@ -19,5 +19,5 @@ ENV NEXT_PUBLIC_JWT_SECRET=your-jwt-secret
 # Expose the port that your app will run on
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application by running index.js
+CMD ["node", "/app/index.js"]
