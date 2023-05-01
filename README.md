@@ -47,7 +47,14 @@ Like all of my menu-based installers, this one includes additional steps that co
 9. Build Docker Image based on input
 10. Starts Docker Image and is ready for interactions
 
-- Adding plugin flow for LoginForm soon
+## Login Form Features
+1. Build another Docker Image using Node and JSON Web Token
+2. Add LoginForm to components/Settings/LoginForm.tsx 
+3. Replace pages/_app.tsx and with code needed for interaction with LoginForm.tsx
+4. Create utils/app/auth.ts for storing and removing access session token
+5. Adds axios and formik to package.json
+6. Rebuilds ChatbotUI Docker Image and implements required changes for Login Form function.
+
 
 **To-Do:**
 

@@ -11,6 +11,7 @@ import tempfile
 import getpass
 import grp
 import pty
+import json
 from termcolor import colored
 
 domain_name = None
@@ -240,118 +241,6 @@ def download_file(url, local_path):
             f.write(response.content)
     except requests.exceptions.RequestException as e:
         print(f"Error downloading file: {e}")
-
-def add_nimdys_login_form():
-    print("Adding Nimdys login form...")
-
-    add_login_form = input("Do you want to add Nimdys login form? (y/n): ").lower()
-    if add_login_form != "y":
-        print("Aborted adding Nimdys login form.")
-        return
-
-    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
-    chatbot_ui_path = None
-    user_home_dir = os.path.expanduser("~")
-    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
-
-    for path in possible_paths:
-        if os.path.exists(path):
-            chatbot_ui_path = path
-            break
-
-    if chatbot_ui_path is None:
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
-        return
-
-    # Download and add LoginForm.tsx to chatbot-ui/Settings/
-    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
-                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
-                  os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
-
-    # Download and replace _app.tsx in chatbot-ui/pages/
-    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
-                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
-                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
-
-    # Execute the commands in addlibs.txt
-    response = requests.get("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/addlibs.txt")
-    commands = response.text.splitlines()
-    for command in commands:
-        os.system(command)
-
-    # Take input for each var or accept defaults
-    env_vars = {
-        "NEXT_PUBLIC_USERNAME": "UserName",
-        "NEXT_PUBLIC_PASSWORD": "Password",
-        "NEXT_PUBLIC_BYPASS_LOGIN": "True"
-    }
-
-    while True:
-        for key, default_value in env_vars.items():
-            user_input = input(f"Enter {key} (default: '{default_value}'): ")
-            env_vars[key] = user_input.strip() or default_value
-
-        print("\nPlease verify the entered values:")
-        for key, value in env_vars.items():
-            print(f"{key}: {value}")
-
-        correct_info = get_user_response("\nIs the information correct? (y/n): ")
-        if correct_info:
-            break
-
-    # Save and overwrite the vars in the .env.local file
-    with open(os.path.join(chatbot_ui_path, ".env.local"), "a") as f:
-        for key, value in env_vars.items():
-            f.write(f"{key}={value}\n")
-
-    # Check if .env.production file exists, create it if not, and add the vars
-    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
-    if not os.path.exists(env_production_file):
-        with open(env_production_file, "w") as f:
-            for key, value in env_vars.items():
-                f.write(f"{key}={value}\n")
-
-    print("Nimdys login form added.")
-
-def remove_nimdys_login_form():
-    print("Removing Nimdys login form...")
-
-    remove_login_form = input("Do you want to remove Nimdys login form? (y/n): ").lower()
-    if remove_login_form != "y":
-        print("Aborted removing Nimdys login form.")
-        return
-
-    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
-    chatbot_ui_path = None
-    user_home_dir = os.path.expanduser("~")
-    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
-
-    for path in possible_paths:
-        if os.path.exists(path):
-            chatbot_ui_path = path
-            break
-
-    if chatbot_ui_path is None:
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
-        return
-
-    # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
-    login_form_backup = os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak")
-    if os.path.exists(login_form_backup):
-        shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
-    else:
-        print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
-
-    # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
-    app_tsx_backup = os.path.join(chatbot_ui_path, "pages/_app.tsx.bak")
-    if os.path.exists(app_tsx_backup):
-        shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
-    else:
-        print("Warning: _app.tsx backup not found. Skipping restoration.")
-
-    print("Nimdys login form removed.")
 
 def main_installation_function():
     progress_filename = "installation_progress.txt"
@@ -837,6 +726,160 @@ def check_dependency_status():
             print("\033[91m✘\033[0m")  # Red cross
 
     print("\nDependency check completed.")
+
+## Nimdys Login Form and JSONWEBTOKEN Addon Functions ##
+
+def add_formik_and_axios():
+    # Define the possible search paths
+    search_paths = [
+        os.path.join(os.path.expanduser("~"), "chatbot-ui"),
+        os.path.join(os.path.expanduser("~root"), "chatbot-ui"),
+        "/opt/chatbot-ui",
+    ]
+
+    # Find the chatbot-ui directory
+    chatbot_ui_path = None
+    for path in search_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        return
+
+    # Change to the chatbot-ui directory
+    os.chdir(chatbot_ui_path)
+
+    # Read the package.json file
+    with open("package.json", "r") as file:
+        package_json = json.load(file)
+
+    # Add Formik and Axios to the dependencies
+    package_json["dependencies"]["formik"] = "^2.2.9"
+    package_json["dependencies"]["axios"] = "^0.26.1"
+
+    # Write the updated package.json file
+    with open("package.json", "w") as file:
+        json.dump(package_json, file, indent=2)
+
+    print("Formik and Axios added to package.json successfully.")
+
+def add_nimdys_login_form():
+    print("Adding Nimdys login form...")
+
+    add_login_form = input("Do you want to add Nimdys login form? (y/n): ").lower()
+    if add_login_form != "y":
+        print("Aborted adding Nimdys login form.")
+        return
+    # Call the function to add Formik and Axios
+    add_formik_and_axios()
+
+    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
+    chatbot_ui_path = None
+    user_home_dir = os.path.expanduser("~")
+    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
+    # Download and add LoginForm.tsx to chatbot-ui/Settings/
+    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
+                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
+                  os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
+
+    # Download and replace _app.tsx in chatbot-ui/pages/
+    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
+                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
+                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
+
+    # Download and add auth.ts in chatbot-ui/utils/app
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
+                  os.path.join(chatbot_ui_path, "utils/app/auth.ts"))
+
+    # Take input for each var or accept defaults
+    env_vars = {
+        "JWT_USERNAME": "UserName",
+        "JWT_PASSWORD": "Password",
+        "NEXT_PUBLIC_BYPASS_LOGIN": "True",
+        "JWT_SECRET": "Enter a random string here"
+    }
+
+    while True:
+        for key, default_value in env_vars.items():
+            user_input = input(f"Enter {key} (default: '{default_value}'): ")
+            env_vars[key] = user_input.strip() or default_value
+
+        print("\nPlease verify the entered values:")
+        for key, value in env_vars.items():
+            print(f"{key}: {value}")
+
+        correct_info = get_user_response("\nIs the information correct? (y/n): ")
+        if correct_info:
+            break
+
+    # Save JWT-related vars in the jwt-config directory
+    jwt_config_path = os.path.join(os.getcwd(), "jwt-config")
+    os.makedirs(jwt_config_path, exist_ok=True)
+
+    with open(os.path.join(jwt_config_path, ".env.local"), "a") as f:
+        for key, value in env_vars.items():
+            if key.startswith("JWT_"):
+                f.write(f"{key}={value}\n")
+
+    # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
+    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
+    with open(env_production_file, "a") as f:
+        f.write(f"NEXT_PUBLIC_BYPASS_LOGIN={env_vars['NEXT_PUBLIC_BYPASS_LOGIN']}\n")
+
+    print("Nimdys login form added.")
+
+def remove_nimdys_login_form():
+    print("Removing Nimdys login form...")
+
+    remove_login_form = input("Do you want to remove Nimdys login form? (y/n): ").lower()
+    if remove_login_form != "y":
+        print("Aborted removing Nimdys login form.")
+        return
+
+    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
+    chatbot_ui_path = None
+    user_home_dir = os.path.expanduser("~")
+    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
+    # Restore LoginForm.tsx in chatbot-ui/Settings/ if the backup exists
+    login_form_backup = os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak")
+    if os.path.exists(login_form_backup):
+        shutil.move(login_form_backup, os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
+    else:
+        print("Warning: LoginForm.tsx backup not found. Skipping restoration.")
+
+    # Restore _app.tsx in chatbot-ui/pages/ if the backup exists
+    app_tsx_backup = os.path.join(chatbot_ui_path, "pages/_app.tsx.bak")
+    if os.path.exists(app_tsx_backup):
+        shutil.move(app_tsx_backup, os.path.join(chatbot_ui_path, "pages/_app.tsx"))
+    else:
+        print("Warning: _app.tsx backup not found. Skipping restoration.")
+
+    print("Nimdys login form removed.")
+
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
