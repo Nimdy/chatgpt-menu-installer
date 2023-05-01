@@ -1,46 +1,44 @@
-//create at location components/Settings/
 import { Formik, Field, Form } from 'formik';
 import toast from 'react-hot-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import Cookies from 'js-cookie';
 
 type Props = {
   onLogin: () => void;
-  username: string | undefined;
-  password: string | undefined;
-  bypassAuth: boolean;
 };
 
-export default function LoginForm({
-    onLogin,
-    username,
-    password,
-    bypassAuth,
-  }: Props) {
+export default function LoginForm({ onLogin }: Props) {
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios
+        .post(
+          'http://localhost:3001/api/validate',
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
+        .then(() => onLogin())
+        .catch(() => {
+          localStorage.removeItem('token');
+        });
+    }
+  }, [onLogin]);
 
   const handleSubmit = async (values: { username: string; password: string }) => {
     setIsLoading(true);
-
-    if (bypassAuth && values.username.trim() === '' && values.password.trim() === '') {
-      console.log('Bypassing authentication');
-      Cookies.set('isLoggedIn', 'true', { expires: 1 });
+    try {
+      const response = await axios.post('http://localhost:3001/api/authenticate', values);
+      const { token } = response.data;
+      localStorage.setItem('token', token);
       onLogin();
-      setIsLoading(false);
-      return;
-    }
-
-    // Check if the entered username and password match the ones from the .env file
-    if (values.username === username && values.password === password) {
-      console.log('Credentials match.');
-      Cookies.set('isLoggedIn', 'true', { expires: 1 }); // Set a cookie for 1 day
-      onLogin();
-    } else {
-      console.log('Credentials do not match.');
-      // If the authentication fails, show an error message
+    } catch (error) {
       toast.error('Invalid username or password.');
     }
-
     setIsLoading(false);
   };
 

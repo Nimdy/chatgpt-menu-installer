@@ -1,4 +1,3 @@
-// replace pages/_app.tsx with new code
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
@@ -8,32 +7,30 @@ import { Inter } from 'next/font/google';
 
 import LoginForm from '../components/Settings/LoginForm';
 import { useState, useEffect } from 'react';
+import { useAuthToken } from '../util/auth';
 
 import '@/styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
-const isBrowser = typeof window !== 'undefined';
 
 function App({ Component, pageProps }: AppProps<{}>) {
   const queryClient = new QueryClient();
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authToken, setAuthToken] = useAuthToken();
+  const bypassAuth = process.env.NEXT_PUBLIC_BYPASS_LOGIN === 'true';
 
   useEffect(() => {
-    if (isBrowser) {
-      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    if (bypassAuth) {
+      setAuthToken('bypass');
     }
-  }, []);
+  }, [bypassAuth, setAuthToken]);
 
-  if (!isLoggedIn) {
-    // If the user is not logged in, show the login form
+  if (!authToken && !bypassAuth) {
+    // If the user is not logged in and not bypassing auth, show the login form
     return (
       <LoginForm
-      onLogin={() => setIsLoggedIn(true)}
-      username={process.env.NEXT_PUBLIC_USERNAME}
-      password={process.env.NEXT_PUBLIC_PASSWORD}
-      bypassAuth={process.env.NEXT_PUBLIC_BYPASS_LOGIN === 'true'}
-    />
+        onLogin={setAuthToken}
+      />
     );
   }
 
