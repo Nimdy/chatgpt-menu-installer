@@ -341,22 +341,6 @@ server {{
         proxy_buffering off;
     }}
 }}
-# server {{
-#     listen 443 ssl;
-#     listen [::]:443 ssl;
-#     server_name {domain_name};
-#     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-#     ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
-#     location / {{
-#         proxy_pass http://localhost:3000;
-#         proxy_http_version 1.1;
-#         proxy_set_header Upgrade $http_upgrade;
-#         proxy_set_header Connection 'upgrade';
-#         proxy_set_header Host $host;
-#         proxy_cache_bypass $http_upgrade;
-#         proxy_buffering off;
-#     }}
-# }}
     """
 
     sites_available_path = f"/etc/nginx/sites-available/{domain_name}"
@@ -942,6 +926,10 @@ def add_nimdys_login_form():
 
     print("Nimdys login form added.")
 
+def rebuild_new_chatbotui_docker_image():
+
+    
+
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
@@ -979,6 +967,8 @@ def remove_nimdys_login_form():
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
+
+
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))

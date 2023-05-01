@@ -47,7 +47,7 @@ app.post('/api/jwt/validate', (req, res) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    jwt.verify(token, process.env.NEXT_PUBLIC_JWT_SECRET);
+    jwt.verify(token, process.env.JWT_SECRET);
     return res.json({ success: true, message: 'Token is valid' });
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Invalid token' });
