@@ -2,7 +2,6 @@ import { Formik, Field, Form } from 'formik';
 import toast from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
 type Props = {
   onLogin: () => void;
