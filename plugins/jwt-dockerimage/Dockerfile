@@ -13,9 +13,6 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Build the Next.js app
-RUN npm run build
-
 # Set the environment variable for JWT secret (Replace 'your-jwt-secret' with your actual JWT secret)
 ENV NEXT_PUBLIC_JWT_SECRET=your-jwt-secret
 
