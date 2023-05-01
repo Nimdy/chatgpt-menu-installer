@@ -1,0 +1,21 @@
+{
+    "name": "jwt-auth-service",
+    "version": "1.0.0",
+    "description": "JWT Authentication Service",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js",
+      "dev": "nodemon index.js"
+    },
+    "dependencies": {
+      "jsonwebtoken": "^8.5.1",
+      "express": "^4.17.1",
+      "cors": "^2.8.5",
+      "body-parser": "^1.19.0",
+      "dotenv": "^8.2.0"
+    },
+    "devDependencies": {
+      "nodemon": "^2.0.7"
+    }
+  }
+  
