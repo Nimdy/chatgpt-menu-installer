@@ -16,7 +16,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-app.post('/api/authenticate', (req, res) => {
+app.post('/api/jwt/authenticate', (req, res) => {
   const { username, password } = req.body;
   
   // Use environment variables for username and password
@@ -39,7 +39,7 @@ app.post('/api/authenticate', (req, res) => {
 });
 
 // New route to validate JWT tokens
-app.post('/api/validate', (req, res) => {
+app.post('/api/jwt/validate', (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ success: false, message: 'No token provided' });
