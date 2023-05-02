@@ -448,11 +448,14 @@ def step3_install_docker_docker_compose_git(step):
     print("Installing Docker, Docker Compose, and Git...\n")
 
     print("Installing Docker...\n")
-    success, stdout, stderr = run_command(["sudo", "apt", "install", "-y", "docker.io"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker.io"])
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
     success, stdout, stderr = run_command(["sudo", "systemctl", "enable", "--now", "docker"])
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     print("Installing Docker Compose...\n")
-    success, stdout, stderr = run_command(["sudo", "apt", "install", "-y", "docker-compose"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker-compose"])
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     current_user = getpass.getuser()
     if current_user == "root":

@@ -122,9 +122,11 @@ sudo apt install python3
 sudo apt install python3-pip
 ```
 
-6. Clone this repo
+6. Clone this repo in the /opt directory and assign ownership to your user - Do not use root for this step
 ```
-git clone https://github.com/Nimdy/chatgpt-menu-installer.git
+cd /opt
+sudo git clone https://github.com/Nimdy/chatgpt-menu-installer.git
+sudo chown -R $USER:$USER /path/to/directory
 ```
 
 7. Change into the new cloned repo director.
@@ -134,37 +136,26 @@ cd chatgpt-menu-installer
 
 8. Install required Python packages:
 ```
-pip3 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 ```
 ## Now you are ready to start the menu. Time to go for a ride! 
 
 9. Start the menu:
-To start the installation menu, run the following command:
-
-![image](https://user-images.githubusercontent.com/16698453/235570661-a41f2154-a398-4eb5-bb23-adff9cd59259.png)
-
+To start the installation menu, run the following command with sudo
 ```
-python3 menu.py
+sudo python3 menu.py
 ```
+
 10. Press 2 to install Chatbot UI
 
 11. Accept any defaults
 
 12. Install Nginx Server
-
-![image](https://user-images.githubusercontent.com/16698453/235570854-0586cc5b-e98c-4e82-95c8-cfde1434cf38.png)
-
-13. Press Y to add a new domain
-
-![image](https://user-images.githubusercontent.com/16698453/235570940-573af654-88d6-4bb3-b2ea-2619371e8f19.png)
+Press Y to add a new domain
 
 14. Enter Domain Name
 
-![image](https://user-images.githubusercontent.com/16698453/235571012-96108502-4b67-4f99-975d-b16b923efc2b.png)
-
 15. Restart Nginx
-
-![image](https://user-images.githubusercontent.com/16698453/235571040-f80caac3-1902-4b3d-aa8c-51c59b71012d.png)
 
 16. Setup Certbot
 
