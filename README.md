@@ -2,8 +2,12 @@
 
 This product is finally ready for test and use. 100% works on a fresh Ubuntu Server with a Domain Name assigned to the IP address and is validated through DNS.
 
-## Ready for Testing
-Installation script works 100% - On a clean VPS with the VPS domain name assigned to a public IP - 5/1/2023 2130 MST
+![image](https://user-images.githubusercontent.com/16698453/235796586-16773e6b-6631-4ade-a93f-5c619caa1931.png)
+
+## Server Hosting Provided By DigitalOcean
+* https://m.do.co/c/9d2217a2725c
+* Use my link and get 100 USD Server Credits from me,  over the next 60 Days!
+* Free Credits without hacks... 
 
 This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server.
 
@@ -217,6 +221,10 @@ https://yourdomain.com
 9. The script will then configure the NGINX Server and add location blocks for JWT API calls
 
 10. Once the NGINX Server Configurations are updated, the script will restart NGINX, and your Chatbot UI will be ready for use with the Login Form
+
+## If you do a docker ps you should see this:
+
+![image](https://user-images.githubusercontent.com/16698453/235796145-eae4ae68-71da-4a16-9989-c5df1ca3de70.png)
 
 ## Disclaimer
 This project is currently in development and is intended for testing purposes only. Please use caution when using it on a production server. The project currently supports Ubuntu LTS, and testing on other platforms is pending.
