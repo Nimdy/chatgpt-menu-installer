@@ -1077,10 +1077,12 @@ def build_jwt_config_docker_image():
         success, stdout, stderr = safe_system_call(["docker-compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
+        print(jwt_config_dir)
         return True
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
+    
 
 
 
