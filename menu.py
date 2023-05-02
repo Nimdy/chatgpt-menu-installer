@@ -713,6 +713,7 @@ def check_dependency_status():
 
 ## Nimdys Login Form and JSONWEBTOKEN Addon Functions ##
 
+## Step 1 add formik and axios to package.json
 def add_formik_and_axios():
     # Define the possible search paths
     search_paths = [
@@ -753,6 +754,7 @@ def add_formik_and_axios():
     print("Updating the Chatbot-UI Dockerfile to allow updating of the package-lock.json file...")
     update_chatbotui_dockerfile()
 
+## Step 2: updated commands to update the package-lock.json file when running the Dockerfile
 def update_chatbotui_dockerfile():
     # Step 1: Change back to the user directory
     if getpass.getuser() == "root":
@@ -782,6 +784,123 @@ def update_chatbotui_dockerfile():
 
     print("Dockerfile has been updated successfully.")
 
+    print("Rebuilding the Docker image...")
+    rebuild_chatbot_ui_docker_image()
+
+## Step 3: Add Nimdys login form
+def add_nimdys_login_form():
+    print("Adding Nimdys login form...")
+
+    add_login_form = input("Do you want to add Nimdys login form? (y/n): ").lower()
+    if add_login_form != "y":
+        print("Aborted adding Nimdys login form.")
+        return
+    # Call the function to add Formik and Axios
+    add_formik_and_axios()
+
+    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
+    chatbot_ui_path = None
+    user_home_dir = os.path.expanduser("~")
+    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            chatbot_ui_path = path
+            break
+
+    if chatbot_ui_path is None:
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+        return
+
+    # Download and add LoginForm.tsx to chatbot-ui/Settings/
+    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
+                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
+                  os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
+
+    # Download and replace _app.tsx in chatbot-ui/pages/
+    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
+                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
+                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
+
+    # Download and add auth.ts in chatbot-ui/utils/app
+    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
+                  os.path.join(chatbot_ui_path, "utils/app/auth.ts"))
+
+    # Take input for each var or accept defaults
+    env_vars = {
+        "JWT_USERNAME": "UserName",
+        "JWT_PASSWORD": "Password",
+        "NEXT_PUBLIC_BYPASS_LOGIN": "True",
+        "JWT_SECRET": "Enter a random string here"
+    }
+
+    while True:
+        for key, default_value in env_vars.items():
+            user_input = input(f"Enter {key} (default: '{default_value}'): ")
+            env_vars[key] = user_input.strip() or default_value
+
+        print("\nPlease verify the entered values:")
+        for key, value in env_vars.items():
+            print(f"{key}: {value}")
+
+        correct_info = get_user_response("\nIs the information correct? (y/n): ")
+        if correct_info:
+            break
+
+    # Save JWT-related vars in the jwt-config directory
+    jwt_config_path = os.path.join(os.getcwd(), "plugins", "jwt-config")
+    os.makedirs(jwt_config_path, exist_ok=True)
+
+    with open(os.path.join(jwt_config_path, ".env.local"), "a") as f:
+        for key, value in env_vars.items():
+            if key.startswith("JWT_"):
+                f.write(f"{key}={value}\n")
+
+    # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
+    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
+    with open(env_production_file, "a") as f:
+        f.write(f"NEXT_PUBLIC_BYPASS_LOGIN={env_vars['NEXT_PUBLIC_BYPASS_LOGIN']}\n")
+
+    print("Nimdys login form added.")
+
+# Step 4: Rebuild the Chatbot-UI Docker image
+def rebuild_chatbot_ui_docker_image():
+    # Step 1: Change back to the user directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
+
+    # Step 2: Check if the chatbot-ui directory exists
+    if not os.path.exists("chatbot-ui"):
+        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
+        return
+
+    os.chdir("chatbot-ui")
+
+    try:
+        # Define the name of the Docker image
+        image_name = 'chatbot-ui_chatgpt'
+        
+        # Define the path to the Dockerfile (adjust as needed)
+        dockerfile_path = './Dockerfile'
+        
+        # Define the build context directory (adjust as needed)
+        context_dir = '.'
+        
+        # Remove the existing Docker image (if it exists)
+        subprocess.run(['docker', 'rmi', image_name], check=True, capture_output=True)
+        
+        # Build the new Docker image
+        subprocess.run(['docker', 'build', '-t', image_name, '-f', dockerfile_path, context_dir], check=True)
+        
+        print(f'Successfully rebuilt the {image_name} Docker image.')
+    except subprocess.CalledProcessError as e:
+        print(f'An error occurred while rebuilding the Docker image: {e.stderr.decode()}')
+
+# Step 5: Update the Nginx configuration for /api/jwt/
 def nginx_config_update():
     def find_nginx_config_directory():
         default_path = '/etc/nginx/sites-available'
@@ -849,86 +968,36 @@ def nginx_config_update():
     else:
         print("Failed to inject location block.")
 
-def add_nimdys_login_form():
-    print("Adding Nimdys login form...")
+# Step 6: Build JWT Dockerfile
+def build_jwt_config_docker_image():
+    # Step 1: Get the current working directory
+    current_dir = os.getcwd()
 
-    add_login_form = input("Do you want to add Nimdys login form? (y/n): ").lower()
-    if add_login_form != "y":
-        print("Aborted adding Nimdys login form.")
-        return
-    # Call the function to add Formik and Axios
-    add_formik_and_axios()
+    # Step 2: Construct the path to the jwt-config directory inside the plugins directory
+    jwt_config_dir = os.path.join(current_dir, "plugins", "jwt-config")
 
-    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
-    chatbot_ui_path = None
-    user_home_dir = os.path.expanduser("~")
-    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
-
-    for path in possible_paths:
-        if os.path.exists(path):
-            chatbot_ui_path = path
-            break
-
-    if chatbot_ui_path is None:
-        print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
+    # Step 3: Check if the jwt-config directory exists
+    if not os.path.exists(jwt_config_dir):
+        print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return
 
-    # Download and add LoginForm.tsx to chatbot-ui/Settings/
-    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
-                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
-                  os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
+    os.chdir(jwt_config_dir)
 
-    # Download and replace _app.tsx in chatbot-ui/pages/
-    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
-                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
-                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
+    try:
+        # Build the Docker image using docker-compose
+        subprocess.run(['docker-compose', 'build'], check=True)
+        print('Successfully built the JWT Config Docker image.')
 
-    # Download and add auth.ts in chatbot-ui/utils/app
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
-                  os.path.join(chatbot_ui_path, "utils/app/auth.ts"))
+        # Start the Docker container using docker-compose
+        subprocess.run(['docker-compose', 'up', '-d'], check=True)
+        print('Successfully started the JWT Config Docker container.')
+    except subprocess.CalledProcessError as e:
+        print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
 
-    # Take input for each var or accept defaults
-    env_vars = {
-        "JWT_USERNAME": "UserName",
-        "JWT_PASSWORD": "Password",
-        "NEXT_PUBLIC_BYPASS_LOGIN": "True",
-        "JWT_SECRET": "Enter a random string here"
-    }
+    # Change back to the original directory
+    os.chdir(current_dir)
 
-    while True:
-        for key, default_value in env_vars.items():
-            user_input = input(f"Enter {key} (default: '{default_value}'): ")
-            env_vars[key] = user_input.strip() or default_value
 
-        print("\nPlease verify the entered values:")
-        for key, value in env_vars.items():
-            print(f"{key}: {value}")
-
-        correct_info = get_user_response("\nIs the information correct? (y/n): ")
-        if correct_info:
-            break
-
-    # Save JWT-related vars in the jwt-config directory
-    jwt_config_path = os.path.join(os.getcwd(), "jwt-config")
-    os.makedirs(jwt_config_path, exist_ok=True)
-
-    with open(os.path.join(jwt_config_path, ".env.local"), "a") as f:
-        for key, value in env_vars.items():
-            if key.startswith("JWT_"):
-                f.write(f"{key}={value}\n")
-
-    # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
-    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
-    with open(env_production_file, "a") as f:
-        f.write(f"NEXT_PUBLIC_BYPASS_LOGIN={env_vars['NEXT_PUBLIC_BYPASS_LOGIN']}\n")
-
-    print("Nimdys login form added.")
-
-def rebuild_new_chatbotui_docker_image():
-
-    
 
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
@@ -967,8 +1036,6 @@ def remove_nimdys_login_form():
         print("Warning: _app.tsx backup not found. Skipping restoration.")
 
     print("Nimdys login form removed.")
-
-
 
 def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_connections, active_connections):
     print(colored("\n┌─────────────────────────────────────────────────────────────┐", "cyan"))
