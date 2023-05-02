@@ -773,18 +773,31 @@ def update_chatbotui_dockerfile():
     with open("Dockerfile", "r") as file:
         dockerfile_content = file.readlines()
 
-    # Step 4: Update the Dockerfile content
+    # Step 4: Check if the desired lines are already present
+    desired_lines = [
+        "# ---- Dependencies ----\n",
+        "FROM base AS dependencies\n",
+        "RUN npm update && \\\n",
+        "    npm ci\n"
+    ]
+    if dockerfile_content[:4] == desired_lines:
+        print("Dockerfile is already up to date.")
+        return
+
+    # Step 5: Update the Dockerfile content
     for i, line in enumerate(dockerfile_content):
         if line.strip() == "FROM base AS dependencies":
-            dockerfile_content[i + 1] = "RUN npm update && \\\n    npm ci\n"
+            dockerfile_content[i:i+2] = desired_lines
+            break
 
-    # Step 5: Write the updated content to the Dockerfile
+    # Step 6: Write the updated content to the Dockerfile
     with open("Dockerfile", "w") as file:
         file.writelines(dockerfile_content)
 
     print("Dockerfile has been updated successfully.")
 
-    print("Rebuilding the Docker image...")
+# Call the function to update the Dockerfile
+update_chatbotui_dockerfile()
 
 ## Step 3: Add Nimdys login form
 def add_nimdys_login_form():
