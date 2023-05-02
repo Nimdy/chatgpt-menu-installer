@@ -898,39 +898,39 @@ def add_nimdys_login_form():
         if correct_info:
             break
 
-        # Get the absolute path of the chatgpt-menu-installer directory
-        installer_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    # Get the absolute path of the chatgpt-menu-installer directory
+    installer_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-        # Save JWT-related vars in the jwt-config directory
-        jwt_config_path = os.path.join(installer_dir, "plugins", "jwt-config")
-        os.makedirs(jwt_config_path, exist_ok=True)
+    # Save JWT-related vars in the jwt-config directory
+    jwt_config_path = os.path.join(installer_dir, "plugins", "jwt-config")
+    os.makedirs(jwt_config_path, exist_ok=True)
 
-        jwt_env_path = os.path.join(jwt_config_path, ".env.local")
-        if os.path.exists(jwt_env_path):
-            with open(jwt_env_path, 'r') as f:
-                existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
-        else:
-            existing_vars = {}
+    jwt_env_path = os.path.join(jwt_config_path, ".env.local")
+    if os.path.exists(jwt_env_path):
+        with open(jwt_env_path, 'r') as f:
+            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
+    else:
+        existing_vars = {}
 
-        with open(jwt_env_path, "w") as f:
-            for key, value in {**existing_vars, **env_vars}.items():
-                if key.startswith("JWT_"):
-                    f.write(f"{key}={value}\n")
-
-        # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
-        env_production_file = os.path.join(chatbot_ui_path, ".env.production")
-
-        if os.path.exists(env_production_file):
-            with open(env_production_file, 'r') as f:
-                existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
-        else:
-            existing_vars = {}
-
-        with open(env_production_file, "w") as f:
-            for key, value in {**existing_vars, **{k: v for k, v in env_vars.items() if k == 'NEXT_PUBLIC_BYPASS_LOGIN'}}.items():
+    with open(jwt_env_path, "w") as f:
+        for key, value in {**existing_vars, **env_vars}.items():
+            if key.startswith("JWT_"):
                 f.write(f"{key}={value}\n")
 
-        print("Nimdys login form added.")
+    # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
+    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
+
+    if os.path.exists(env_production_file):
+        with open(env_production_file, 'r') as f:
+            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
+    else:
+        existing_vars = {}
+
+    with open(env_production_file, "w") as f:
+        for key, value in {**existing_vars, **{k: v for k, v in env_vars.items() if k == 'NEXT_PUBLIC_BYPASS_LOGIN'}}.items():
+            f.write(f"{key}={value}\n")
+
+    print("Nimdys login form added.")
 
 # Step 4: Rebuild the Chatbot-UI Docker image
 def rebuild_chatbot_ui_docker_image():
