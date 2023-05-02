@@ -18,66 +18,15 @@ from termcolor import colored
 
 domain_name = None
 
-def read_progress_file(progress_filename):
-    if os.path.exists(progress_filename):
-        with open(progress_filename, "r") as f:
-            return int(f.read().strip())
+def add_user_to_docker_group():
+    user = getpass.getuser()
+    print(f"Adding {user} to the docker group...")
+    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", user])
+    if success:
+        print("User added to the docker group. Please log out and log back in for the changes to take effect.")
     else:
-        with open(progress_filename, "w") as f:
-            f.write("0")
-        return 0
+        print(f"Error adding {user} to the docker group: {stderr}")
 
-def update_progress_file(progress_filename, step):
-    with open(progress_filename, "w") as f:
-        f.write(str(step))
-
-def save_domain_name_to_file(domain_name):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    domain_name_file = os.path.join(script_dir, "domain_name.txt")
-    
-    with open(domain_name_file, "w") as f:
-        f.write(domain_name)
-    print("\n")
-    print(f"Domain name saved to {domain_name_file}")
-    print("\n")
-
-def load_domain_name_from_file():
-    try:
-        with open("domain_name.txt", "r") as f:
-            domain_name = f.read().strip()
-    except FileNotFoundError:
-        domain_name = ""
-        print("Domain name not found. It will be set during the Nginx configuration process.")
-    
-    return domain_name
-
-def get_user_response(prompt):
-    print(prompt)
-
-    while True:
-        response = input().strip().lower()
-
-        if response in ['y', 'n', 'q']:
-            if response == 'q':
-                raise SystemExit("User chose to quit.")
-            else:
-                return response == 'y'
-        else:
-            print("Invalid input. Please enter 'y', 'n', or 'q' to quit.")
-
-def safe_system_call(cmd):
-    if isinstance(cmd, str):
-        cmd = cmd.split()
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.returncode == 0, result.stdout, result.stderr
-
-def run_command(args, stdin=None, stdout=None):
-    try:
-        result = subprocess.run(args, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, text=True)
-        return True, result.stdout, result.stderr
-    except Exception as e:
-        return False, "", str(e)
-    
 def create_new_user():
     while True:
         new_username = input("Enter a new username: ").strip()
@@ -108,9 +57,43 @@ def create_new_user():
     print(f"User {new_username} created with sudo permissions.\n")
     return new_username
 
+def check_docker_group_membership():
+    user = getpass.getuser()
+    group_members = grp.getgrnam("docker").gr_mem
+    return user in group_members
+
 def check_nginx_running():
     success, output, _ = safe_system_call("systemctl is-active nginx")
     return success and output.strip() == "active"
+
+def download_file(url, local_path):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(local_path, "wb") as f:
+            f.write(response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading file: {e}")
+
+def get_user_response(prompt, default_value=None, allowed_values=None):
+    if default_value is not None:
+        prompt = f"{prompt} (default: '{default_value}')"
+
+    print(prompt)
+
+    while True:
+        response = input().strip()
+
+        if allowed_values is not None:
+            response = response.lower()
+
+        if not response and default_value is not None:
+            return default_value
+
+        if allowed_values is None or response in allowed_values:
+            return response
+        else:
+            print(f"Invalid input. Please enter one of the following: {', '.join(allowed_values)}")
 
 def is_domain_publicly_visible(domain_name=None):
     if domain_name is None:
@@ -147,19 +130,127 @@ def is_nginx_running():
     except (socket.timeout, socket.error) as e:
         return False
 
-def check_docker_group_membership():
-    user = getpass.getuser()
-    group_members = grp.getgrnam("docker").gr_mem
-    return user in group_members
+def load_domain_name_from_file():
+    try:
+        with open("domain_name.txt", "r") as f:
+            domain_name = f.read().strip()
+    except FileNotFoundError:
+        domain_name = ""
+        print("Domain name not found. It will be set during the Nginx configuration process.")
+    
+    return domain_name
 
-def add_user_to_docker_group():
-    user = getpass.getuser()
-    print(f"Adding {user} to the docker group...")
-    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", user])
-    if success:
-        print("User added to the docker group. Please log out and log back in for the changes to take effect.")
+def main_installation_function():
+    progress_filename = "installation_progress.txt"
+    
+    if os.path.exists(progress_filename):
+        saved_step = read_progress_file(progress_filename)
     else:
-        print(f"Error adding {user} to the docker group: {stderr}")
+        saved_step = 0
+
+    load_domain_name_from_file()
+
+    for step in range(saved_step + 1, 6):
+        if step == 1:
+            step1_configure_nginx(step)
+        elif step == 2:
+            step2_setup_ssl_certbot(step)
+        elif step == 3:
+            step3_install_docker_docker_compose(step)
+        elif step == 4:
+            step4_setup_gpt_chatbot_ui(step)
+        update_progress_file(progress_filename, step)
+
+    # Remove the progress file once the installation is complete
+    if os.path.exists(progress_filename):
+        os.remove(progress_filename)
+
+def read_progress_file(progress_filename):
+    if os.path.exists(progress_filename):
+        with open(progress_filename, "r") as f:
+            return int(f.read().strip())
+    else:
+        with open(progress_filename, "w") as f:
+            f.write("0")
+        return 0
+
+def run_certbot_command(args, stdin=None):
+    try:
+        with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            while True:
+                stdout_output = proc.stdout.readline()
+                stderr_output = proc.stderr.readline()
+                if stdout_output:
+                    print(stdout_output.strip())
+                elif stderr_output:
+                    print(stderr_output.strip())
+                else:
+                    break
+            proc.wait()
+            return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
+    except Exception as e:
+        return False, "", str(e)
+
+def run_certbot_command_pty(args):
+    try:
+        exit_code = pty.spawn(args)
+        return exit_code == 0
+    except Exception as e:
+        return False
+
+def run_command(args, stdin=None, stdout=None):
+    try:
+        result = subprocess.run(args, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, text=True)
+        return True, result.stdout, result.stderr
+    except Exception as e:
+        return False, "", str(e)
+
+def save_domain_name_to_file(domain_name):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    domain_name_file = os.path.join(script_dir, "domain_name.txt")
+    
+    with open(domain_name_file, "w") as f:
+        f.write(domain_name)
+    print("\n")
+    print(f"Domain name saved to {domain_name_file}")
+    print("\n")
+
+def safe_system_call(cmd):
+    if isinstance(cmd, str):
+        cmd = cmd.split()
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.returncode == 0, result.stdout, result.stderr
+
+def update_and_upgrade_system():
+    print("Updating the package list...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "update"])
+    if not success:
+        print(f"Error updating package list: {stderr}")
+
+    print("Upgrading the system...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "upgrade", "-y"])
+    if not success:
+        print(f"Error upgrading the system: {stderr}")
+
+    print("Cleaning up unused packages...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "autoremove", "-y"])
+    if not success:
+        print(f"Error cleaning up unused packages: {stderr}")
+
+    print("System update and upgrade completed.")
+    print("Please reboot the system to apply the changes.")
+    print("After rebooting, run this script again to continue with menu option 2.")
+
+def update_env_file(env_path, updated_vars, key_filter=lambda key: True):
+    existing_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
+    
+    with open(env_path, "w") as f:
+        for key, value in {**existing_vars, **updated_vars}.items():
+            if key_filter(key):
+                f.write(f"{key}={value}\n")
 
 def update_gpt_chatbot_ui():
     print("Checking for updates in GPT Chatbot UI...\n")
@@ -211,93 +302,17 @@ def update_gpt_chatbot_ui():
     else:
         print("GPT Chatbot UI is already up to date.\n")
 
-def run_certbot_command(args, stdin=None):
-    try:
-        with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-            while True:
-                stdout_output = proc.stdout.readline()
-                stderr_output = proc.stderr.readline()
-                if stdout_output:
-                    print(stdout_output.strip())
-                elif stderr_output:
-                    print(stderr_output.strip())
-                else:
-                    break
-            proc.wait()
-            return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
-    except Exception as e:
-        return False, "", str(e)
+def update_progress_file(progress_filename, step):
+    with open(progress_filename, "w") as f:
+        f.write(str(step))
 
-def run_certbot_command_pty(args):
-    try:
-        exit_code = pty.spawn(args)
-        return exit_code == 0
-    except Exception as e:
-        return False
+def update_step_status(step):
+    for i in range(1, step):
+        print(f"[✓] Step {i}", end=" ")
+    print(f"[✗] Step {step}")
 
-def download_file(url, local_path):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(local_path, "wb") as f:
-            f.write(response.content)
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading file: {e}")
-
-def main_installation_function():
-    progress_filename = "installation_progress.txt"
-    
-    if os.path.exists(progress_filename):
-        saved_step = read_progress_file(progress_filename)
-    else:
-        saved_step = 0
-
-    load_domain_name_from_file()
-
-    def update_step_status(step):
-        for i in range(1, step):
-            print(f"[✓] Step {i}", end=" ")
-        print(f"[✗] Step {step}")
-
-    for step in range(saved_step + 1, 6):
-        update_step_status(step)
-        if step == 1:
-            step1_update_and_upgrade_system()
-        elif step == 2:
-            step2_configure_nginx()
-        elif step == 3:
-            step3_setup_ssl_certbot()
-        elif step == 4:
-            step4_install_docker_docker_compose_git()
-        elif step == 5:
-            step5_setup_gpt_chatbot_ui()
-        update_progress_file(progress_filename, step)
-
-    # Remove the progress file once the installation is complete
-    if os.path.exists(progress_filename):
-        os.remove(progress_filename)
-
-def step1_update_and_upgrade_system():
-    print("Updating the package list...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "update"])
-    if not success:
-        print(f"Error updating package list: {stderr}")
-
-    print("Upgrading the system...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "upgrade", "-y"])
-    if not success:
-        print(f"Error upgrading the system: {stderr}")
-
-    print("Cleaning up unused packages...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "autoremove", "-y"])
-    if not success:
-        print(f"Error cleaning up unused packages: {stderr}")
-
-    print("System update and upgrade completed.")
-    print("Please reboot the system to apply the changes.")
-    print("After rebooting, run this script again to continue with menu option 2.")
-    
-def step2_configure_nginx():
+## Main Install Steps for Chatbot UI
+def step1_configure_nginx(step):
     global domain_name
     print("Configuring Nginx...")
 
@@ -369,6 +384,7 @@ server {{
         is_successful, _, _ = safe_system_call("sudo systemctl restart nginx")
 
         if is_successful:
+            update_step_status(step)
             print("Nginx restarted with the new configuration.")
         else:
             print("Job for nginx.service failed because the control process exited with error code.")
@@ -382,26 +398,31 @@ server {{
     else:
         print("Nginx was not restarted. Apply the new configuration by restarting Nginx manually.")
 
-    if is_certbot_installed():
-        if get_user_response("Certbot is installed. Do you want to set up SSL with Certbot? (y/n): "):
-            step3_setup_ssl_certbot()
-        else:
-            print("SSL setup with Certbot skipped.")
-    else:
-        if get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): "):
-            print("Installing Certbot...")
-            success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "certbot", "python3-certbot-nginx"])
-            step3_setup_ssl_certbot()
-        else:
-            print("Certbot installation and SSL setup skipped.")
-
-def step3_setup_ssl_certbot():
+def step2_setup_ssl_certbot(step):
     global domain_name
 
+    # Check if Certbot is installed
+    certbot_installed = is_certbot_installed()
+
+    # Ask user to install Certbot if not installed
+    if not certbot_installed and not get_user_response("Certbot is not installed. Do you want to install Certbot and set up SSL? (y/n): "):
+        print("Certbot installation and SSL setup skipped.")
+        return
+
+    # Install Certbot if not installed
+    if not certbot_installed:
+        print("Installing Certbot...")
+        success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "certbot", "python3-certbot-nginx"])
+        if not success:
+            print(f"Certbot installation failed: {stderr}")
+            return
+
+    # Check domain accessibility
     if not is_domain_publicly_visible(domain_name):
         print("\nThe domain is not accessible from the public. Please check your Nginx configuration before setting up SSL.")
         return
 
+    # Setup SSL
     print("\nSetting up SSL with Certbot...\n")
 
     # Check if the certificate files exist
@@ -409,6 +430,9 @@ def step3_setup_ssl_certbot():
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
         success = run_certbot_command_pty(["sudo", "certbot", "--nginx", "-d", domain_name])
+        if not success:
+            print("SSL certificate request failed.")
+            return
         print("\n")
     else:
         print("\nCertificate files already exist. Skipping certificate request.\n")
@@ -419,31 +443,26 @@ def step3_setup_ssl_certbot():
         print("Nginx configuration test failed. Please fix the issues before proceeding.")
         print(config_test_result.stderr)
         return
-    else:
-        print("\nNginx configuration test passed. With CertBot SSL Certs applied.\n")
 
-    if get_user_response("Do you want to automatically renew SSL certificates? (y/n): "):
-        print("\nSetting up automatic certificate renewal...\n")
-        success, stdout, stderr = run_command(["echo", "0 5 * * * /usr/bin/certbot renew --quiet", "|", "sudo", "tee", "-a", "/etc/crontab", ">", "/dev/null"])
-        print("\n")
-    else:
-        print("\nAutomatic certificate renewal not set up.\n")
-
+    print("\nNginx configuration test passed. With CertBot SSL Certs applied.\n")
+    update_step_status(step)
     print("SSL setup with Certbot completed.\n")
 
-def step4_install_docker_docker_compose_git():
-    print("Installing Docker, Docker Compose, and Git...\n")
+    # Add one liner and take user input for the following command
+    #certbot --nginx --non-interactive --agree-tos --domains domain_name --email email_address
 
-    print("Installing Git...\n")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "git"])
+def step3_install_docker_docker_compose(step):
+    print("Installing Docker, Docker Compose, and Git...\n")
 
     print("Installing Docker...\n")
     success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker.io"])
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
     success, stdout, stderr = run_command(["sudo", "systemctl", "enable", "--now", "docker"])
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     print("Installing Docker Compose...\n")
     success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker-compose"])
-
+    print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     current_user = getpass.getuser()
     if current_user == "root":
@@ -482,37 +501,47 @@ def step4_install_docker_docker_compose_git():
         selected_user = current_user
 
     print(f"Adding {selected_user} to the docker group...")
-    success, stdout, stderr = run_command(f"sudo usermod -aG docker {selected_user}")
+    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", selected_user])
     if not success:
         print(f"Error adding {selected_user} to the docker group: {stderr}")
 
     # Restart Docker service
-    success, stdout, stderr = run_command("sudo systemctl restart docker")
+    success, stdout, stderr = run_command(["sudo", "systemctl", "restart", "docker"])
     if not success:
         print(f"Error restarting Docker service: {stderr}")
 
     print("Installation of Docker, Docker Compose, and Git completed.")
+    print("You need to refresh your shell session for the changes to take effect.")
+    print("Please log out and log back in or run the following command to refresh your shell session:")
+    print("    exec su -l $USER")
+    print("After refreshing your shell session, run this script again to continue with menu option 3.")
+    update_step_status(step)
+    update_progress_file("installation_progress.txt", step)
+    time.sleep(3)
+    sys.exit()
 
-def step5_setup_gpt_chatbot_ui():
+def step4_setup_gpt_chatbot_ui(step):
     print("Setting up GPT Chatbot UI...\n")
 
     # Step 1: Change to the appropriate directory
-    if getpass.getuser() == "root":
-        os.chdir("/opt")
-    else:
-        os.chdir(os.path.expanduser("~"))
+    os.chdir("/opt")
 
     # Step 2: Download the GitHub repo
     if not os.path.exists("chatbot-ui"):
         user_input = input("The 'chatbot-ui' directory was not found. Do you want to download it? (y/n): ").lower()
         if user_input == "y":
-            success, stdout, stderr = run_command(["git", "clone", "https://github.com/mckaywrigley/chatbot-ui.git"])
+            success, stdout, stderr = run_command(["sudo", "git", "clone", "https://github.com/mckaywrigley/chatbot-ui.git"])
             if not success:
                 print(f"Error: Failed to download the 'chatbot-ui' directory. Please try again.\nStdout: {stdout}\nStderr: {stderr}\n")
                 return
             if not os.path.exists("chatbot-ui"):
                 print("Error: Failed to download the 'chatbot-ui' directory. Please try again.\n")
                 return
+
+            current_user = getpass.getuser()
+            success, stdout, stderr = run_command(["sudo", "chown", "-R", f"{current_user}:{current_user}", "chatbot-ui"])
+            if not success:
+                print(f"Error changing ownership of 'chatbot-ui' directory: {stderr}\n")
         else:
             print("Please download the 'chatbot-ui' directory and follow the instructions.\n")
             return
@@ -580,22 +609,23 @@ def step5_setup_gpt_chatbot_ui():
         print(f"Stdout: {stdout}\nStderr: {stderr}\n")
         return
 
-    # Check if the user is part of the Docker group
-    if not check_docker_group_membership():
-        print("You need to be a member of the 'docker' group to start the services.\n")
-        user_input = input("Do you want to be added to the 'docker' group? (y/n): ").lower()
-        if user_input == "y":
-            add_user_to_docker_group()
-            print("You might have to log out and log back in, and then run the script again to start the services.\n")
-            return
-        else:
-            print("You will need to add yourself to the 'docker' group manually to start the services.\n")
+    # # Check if the user is part of the Docker group
+    # if not check_docker_group_membership():
+    #     print("You need to be a member of the 'docker' group to start the services.\n")
+    #     user_input = input("Do you want to be added to the 'docker' group? (y/n): ").lower()
+    #     if user_input == "y":
+    #         add_user_to_docker_group()
+    #         print("You might have to log out and log back in, and then run the script again to start the services.\n")
+    #         return
+    #     else:
+    #         print("You will need to add yourself to the 'docker' group manually to start the services.\n")
 
     # Ask the user if they wish to start the services
-    user_input = input("Do you want to start the services? (y/n): ").lower()
+    user_input = input("Do you want to start the Chatbot UI Docker service? (y/n): ").lower()
     if user_input == "y":
         success, stdout, stderr = run_command(["docker-compose", "up", "-d"])
         if success:
+            update_step_status(step)
             print("Services started.\n")
         else:
             print(f"Error starting services: {stderr}\n")
@@ -660,7 +690,7 @@ def get_total_connections():
     except Exception as e:
         print(f"Error retrieving connection count: {e}")
         return 0
-
+       
 def get_active_connections():
     try:
         log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
@@ -714,24 +744,13 @@ def check_dependency_status():
     print("\nDependency check completed.")
 
 ## Nimdys Login Form and JSONWEBTOKEN Addon Functions ##
-
 ## Step 1 add formik and axios to package.json
 def add_formik_and_axios():
-    # Define the possible search paths
-    search_paths = [
-        os.path.join(os.path.expanduser("~"), "chatbot-ui"),
-        os.path.join(os.path.expanduser("~root"), "chatbot-ui"),
-        "/opt/chatbot-ui",
-    ]
+    # Define the chatbot-ui path
+    chatbot_ui_path = "/opt/chatbot-ui"
 
-    # Find the chatbot-ui directory
-    chatbot_ui_path = None
-    for path in search_paths:
-        if os.path.exists(path):
-            chatbot_ui_path = path
-            break
-
-    if chatbot_ui_path is None:
+    # Check if the chatbot-ui directory exists
+    if not os.path.exists(chatbot_ui_path):
         print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
         return
 
@@ -757,20 +776,18 @@ def add_formik_and_axios():
 
 # Step 2: updated commands to update the package-lock.json file when running the Dockerfile
 def update_chatbotui_dockerfile():
-    # Step 1: Change back to the user directory
-    if getpass.getuser() == "root":
-        os.chdir("/opt")
-    else:
-        os.chdir(os.path.expanduser("~"))
+    # Define the chatbot-ui path
+    chatbot_ui_path = "/opt/chatbot-ui"
 
-    # Step 2: Check if the chatbot-ui directory exists
-    if not os.path.exists("chatbot-ui"):
+    # Check if the chatbot-ui directory exists
+    if not os.path.exists(chatbot_ui_path):
         print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
         return
 
-    os.chdir("chatbot-ui")
+    # Change to the chatbot-ui directory
+    os.chdir(chatbot_ui_path)
 
-    # Step 3: Define the desired Dockerfile content
+    # Define the desired Dockerfile content
     desired_content = """# ---- Base Node ----
 FROM node:19-alpine AS base
 WORKDIR /app
@@ -802,7 +819,7 @@ EXPOSE 3000
 # Start the application
 CMD ["npm", "start"]"""
 
-    # Step 4: Write the desired content to the Dockerfile
+    # Write the desired content to the Dockerfile
     with open("Dockerfile", "w") as file:
         file.write(desired_content)
 
@@ -816,20 +833,14 @@ def add_nimdys_login_form():
     if add_login_form != "y":
         print("Aborted adding Nimdys login form.")
         return
+
     # Call the function to add Formik and Axios
     add_formik_and_axios()
 
-    # Check if the chatbot-ui directory exists in the user's home directory or /opt/
-    chatbot_ui_path = None
-    user_home_dir = os.path.expanduser("~")
-    possible_paths = [os.path.join(user_home_dir, "chatbot-ui"), "/opt/chatbot-ui"]
+    # Set the chatbot-ui directory path
+    chatbot_ui_path = "/opt/chatbot-ui"
 
-    for path in possible_paths:
-        if os.path.exists(path):
-            chatbot_ui_path = path
-            break
-
-    if chatbot_ui_path is None:
+    if not os.path.exists(chatbot_ui_path):
         print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.")
         return
 
@@ -863,7 +874,6 @@ def add_nimdys_login_form():
         download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
                     auth_path)
 
-
     # Take input for each var or accept defaults
     env_vars = {
         "JWT_USERNAME": "UserName",
@@ -875,77 +885,38 @@ def add_nimdys_login_form():
     while True:
         for key, default_value in env_vars.items():
             if key == "NEXT_PUBLIC_BYPASS_LOGIN":
-                while True:
-                    user_input = input(f"Enter {key} (True/False, default: '{default_value}'): ")
-                    user_input = user_input.strip() or default_value
-                    if user_input.lower() in ["true", "false"]:
-                        env_vars[key] = user_input.capitalize()
-                        break
-                    elif user_input.lower() == "q":
-                        print("Exiting.")
-                        return
-                    else:
-                        print("Invalid input. Please enter 'True', 'False', or 'q' to exit.")
+                env_vars[key] = get_user_response(f"Enter {key}", default_value, ["true", "false"]).capitalize()
             else:
-                user_input = input(f"Enter {key} (default: '{default_value}'): ")
-                env_vars[key] = user_input.strip() or default_value
+                env_vars[key] = get_user_response(f"Enter {key}", default_value)
 
         print("\nPlease verify the entered values:")
         for key, value in env_vars.items():
             print(f"{key}: {value}")
 
-        correct_info = get_user_response("\nIs the information correct? (y/n): ")
-        if correct_info:
+        if get_user_response("\nIs the information correct? (y/n): "):
             break
 
-    # Get the absolute path of the chatgpt-menu-installer directory
-    installer_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
     # Save JWT-related vars in the jwt-config directory
-    jwt_config_path = os.path.join(installer_dir, "plugins", "jwt-config")
+    jwt_config_path = "/opt/chatgpt-menu-installer/plugins/jwt-config"
     os.makedirs(jwt_config_path, exist_ok=True)
-
-    jwt_env_path = os.path.join(jwt_config_path, ".env.local")
-    if os.path.exists(jwt_env_path):
-        with open(jwt_env_path, 'r') as f:
-            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
-    else:
-        existing_vars = {}
-
-    with open(jwt_env_path, "w") as f:
-        for key, value in {**existing_vars, **env_vars}.items():
-            if key.startswith("JWT_"):
-                f.write(f"{key}={value}\n")
+    update_env_file(os.path.join(jwt_config_path, ".env.local"), env_vars, key_filter=lambda key: key.startswith("JWT_"))
 
     # Save NEXT_PUBLIC_BYPASS_LOGIN in the .env.production file in the ChatbotUI directory
-    env_production_file = os.path.join(chatbot_ui_path, ".env.production")
-
-    if os.path.exists(env_production_file):
-        with open(env_production_file, 'r') as f:
-            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
-    else:
-        existing_vars = {}
-
-    with open(env_production_file, "w") as f:
-        for key, value in {**existing_vars, **{k: v for k, v in env_vars.items() if k == 'NEXT_PUBLIC_BYPASS_LOGIN'}}.items():
-            f.write(f"{key}={value}\n")
+    env_production_file = "/opt/chatbot-ui/.env.production"
+    update_env_file(env_production_file, {k: v for k, v in env_vars.items() if k == 'NEXT_PUBLIC_BYPASS_LOGIN'})
 
     print("Nimdys login form added.")
 
 # Step 4: Rebuild the Chatbot-UI Docker image
 def rebuild_chatbot_ui_docker_image():
-    # Step 1: Change back to the user directory
-    if getpass.getuser() == "root":
-        os.chdir("/opt")
-    else:
-        os.chdir(os.path.expanduser("~"))
+    chatbot_ui_dir = "/opt/chatbot-ui"
 
-    # Step 2: Check if the chatbot-ui directory exists
-    if not os.path.exists("chatbot-ui"):
+    # Step 1: Check if the chatbot-ui directory exists
+    if not os.path.exists(chatbot_ui_dir):
         print("GPT Chatbot UI is not installed. Please run the setup_gpt_chatbot_ui() function first.\n")
         return
 
-    os.chdir("chatbot-ui")
+    os.chdir(chatbot_ui_dir)
 
     # Test the docker-compose
     print("Testing the docker-compose...\n")
@@ -957,7 +928,7 @@ def rebuild_chatbot_ui_docker_image():
         return
 
     # Ask the user if they wish to start/rebuild the services
-    user_input = input("Do you want to start/rebuild the services? (y/n): ").lower()
+    user_input = get_user_response("Do you want to start/rebuild the services?", "n", ["y", "n"])
     if user_input == "y":
         success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
         if success:
@@ -1047,27 +1018,15 @@ def nginx_config_update():
 
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    # Step 1: Change to the appropriate directory
-    if getpass.getuser() == "root":
-        os.chdir("/opt")
-    else:
-        os.chdir(os.path.expanduser("~"))
+    # Step 1: Define the directories
+    installer_dir = "/opt/chatgpt-menu-installer"
+    jwt_config_dir = os.path.join(installer_dir, "plugins", "jwt-config")
 
-    # Step 2: Search for the chatgpt-menu-installer directory
-    installer_dir = None
-    for root, dirs, files in os.walk("."):
-        if "chatgpt-menu-installer" in dirs:
-            installer_dir = os.path.abspath(os.path.join(root, "chatgpt-menu-installer"))
-            break
-
-    if not installer_dir:
+    # Step 2: Check if the chatgpt-menu-installer and jwt-config directories exist
+    if not os.path.exists(installer_dir):
         print("chatgpt-menu-installer directory not found. Please ensure it is installed in the appropriate location.")
         return False
 
-    # Step 3: Construct the path to the jwt-config directory inside the chatgpt-menu-installer directory
-    jwt_config_dir = os.path.join(installer_dir, "plugins", "jwt-config")
-
-    # Step 4: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
@@ -1077,7 +1036,7 @@ def build_jwt_config_docker_image():
         os.chdir(jwt_config_dir)
 
         # Build the Docker image and start it using docker-compose
-        success, stdout, stderr = safe_system_call(["docker-compose", "up", "--build", "-d"])
+        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
         print(jwt_config_dir)
@@ -1086,21 +1045,19 @@ def build_jwt_config_docker_image():
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
 
-
-
 # Call all the plugin functions for install and complete them in order
 def install_nimdys_login_form():
     # Execute the functions in the specified order
     add_formik_and_axios()
-    update_chatbotui_dockerfile()
     add_nimdys_login_form()
+    update_chatbotui_dockerfile()
     rebuild_chatbot_ui_docker_image()
     nginx_config_update()
     build_jwt_config_docker_image()
 
     print("Installation completed successfully.")
 
-
+# Coming soon needs reworked
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
@@ -1153,16 +1110,13 @@ def print_dashboard(nginx_status, docker_status, domain_name, public_ip, total_c
 
 def print_menu():
     print(colored("\nMenu:", "green"))
-    print(colored("1. Update & Upgrade System", "green"))
+    print(colored("1. Update & Upgrade OS System", "green"))
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Install Nimdys Login Form", "green"))
-    print(colored("4. Remove Nimdys Login Form", "green"))
-    print(colored("5. Quick dependency check", "green"))
+    print(colored("4. Quick dependency check", "green"))
+    print(colored("5. CERTBOT TEST", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
-    print(colored("99. Test JWT Build", "green"))
-
     print(colored("0. Exit", "green"))
-
 
 def main():
     load_domain_name_from_file()
@@ -1183,19 +1137,17 @@ def main():
         choice = input(colored("\nEnter your choice: ", "yellow"))
 
         if choice == "1":
-            step1_update_and_upgrade_system()
+            update_and_upgrade_system()
         elif choice == "2":
             main_installation_function()
         elif choice == "3":
             install_nimdys_login_form()
         elif choice == "4":
-            remove_nimdys_login_form()
-        elif choice == "5":
             check_dependency_status()   
+        elif choice == "5":
+            step2_setup_ssl_certbot()
         elif choice == "42":
             update_gpt_chatbot_ui()
-        elif choice == "99":
-            build_jwt_config_docker_image()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
