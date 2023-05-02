@@ -1054,6 +1054,7 @@ def build_jwt_config_docker_image():
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
 
+    original_dir = os.getcwd()
     try:
         # Change the working directory to the jwt-config directory
         os.chdir(jwt_config_dir)
@@ -1066,6 +1067,9 @@ def build_jwt_config_docker_image():
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
+    finally:
+        os.chdir(original_dir)
+
 
 
 
