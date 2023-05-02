@@ -834,20 +834,30 @@ def add_nimdys_login_form():
         return
 
     # Download and add LoginForm.tsx to chatbot-ui/Settings/
-    shutil.copy(os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx"),
-                os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
-                  os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx"))
+    login_form_path = os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx")
+    if not os.path.exists(login_form_path):
+        print("LoginForm.tsx not found. Skipping.")
+    else:
+        shutil.copy(login_form_path, login_form_path + ".bak")
+        download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
+                    login_form_path)
 
     # Download and replace _app.tsx in chatbot-ui/pages/
-    shutil.copy(os.path.join(chatbot_ui_path, "pages/_app.tsx"),
-                os.path.join(chatbot_ui_path, "pages/_app.tsx.bak"))
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
-                  os.path.join(chatbot_ui_path, "pages/_app.tsx"))
+    app_path = os.path.join(chatbot_ui_path, "pages/_app.tsx")
+    if not os.path.exists(app_path):
+        print("_app.tsx not found. Skipping.")
+    else:
+        shutil.copy(app_path, app_path + ".bak")
+        download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/_app.tsx",
+                    app_path)
 
     # Download and add auth.ts in chatbot-ui/utils/app
-    download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
-                  os.path.join(chatbot_ui_path, "utils/app/auth.ts"))
+    auth_path = os.path.join(chatbot_ui_path, "utils/app/auth.ts")
+    if not os.path.exists(auth_path):
+        print("auth.ts not found. Skipping.")
+    else:
+        download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/auth.ts",
+                    auth_path)
 
     # Take input for each var or accept defaults
     env_vars = {
