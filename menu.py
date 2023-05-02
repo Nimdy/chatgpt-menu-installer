@@ -837,8 +837,21 @@ def add_nimdys_login_form():
 
     while True:
         for key, default_value in env_vars.items():
-            user_input = input(f"Enter {key} (default: '{default_value}'): ")
-            env_vars[key] = user_input.strip() or default_value
+            if key == "NEXT_PUBLIC_BYPASS_LOGIN":
+                while True:
+                    user_input = input(f"Enter {key} (True/False, default: '{default_value}'): ")
+                    user_input = user_input.strip() or default_value
+                    if user_input.lower() in ["true", "false"]:
+                        env_vars[key] = user_input.capitalize()
+                        break
+                    elif user_input.lower() == "q":
+                        print("Exiting.")
+                        return
+                    else:
+                        print("Invalid input. Please enter 'True', 'False', or 'q' to exit.")
+            else:
+                user_input = input(f"Enter {key} (default: '{default_value}'): ")
+                env_vars[key] = user_input.strip() or default_value
 
         print("\nPlease verify the entered values:")
         for key, value in env_vars.items():
