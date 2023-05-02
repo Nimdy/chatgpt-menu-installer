@@ -1043,12 +1043,9 @@ def build_jwt_config_docker_image():
         return
 
     try:
-        # Build the Docker image using docker-compose
-        subprocess.run(['docker-compose', 'build'], check=True, cwd=jwt_config_dir)
+        # Build the Docker image and start it using docker-compose
+        run_command(["docker-compose", "up", "-d"])
         print('Successfully built the JWT Config Docker image.')
-
-        # Start the Docker container using docker-compose
-        subprocess.run(['docker-compose', 'up', '-d'], check=True, cwd=jwt_config_dir)
         print('Successfully started the JWT Config Docker container.')
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
