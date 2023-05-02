@@ -1,21 +1,9 @@
 # Self-Hosted Chatbot UI Installer
 
-Note: This project is currently in development and not ready for production use. Please use it for testing purposes only.
-
-**WORKING LOGINFORM DONT INSTALL PLUGIN YET EVERYTHING ELSE WORKS THOUGH**
+This product is finally ready for test and use. 100% works on a fresh Ubuntu Server with a Domain Name assigned to the IP address and is validated through DNS.
 
 ## Ready for Testing
-Installation script works 100% - On a clean VPS with the VPS domain name assigned to a public IP - 4/20/2023 1500 MST
-
-Working on the installation of the login form - This will need to overwrite the core files of:
-
-Add - LoginForm.tsx
-Edit - _app.tsx
-Edit - package.json
-Add - .env.production for the USERNAME, PASSWORD and Bypass Login Form settings
-
-
-ALMOST DONE!!
+Installation script works 100% - On a clean VPS with the VPS domain name assigned to a public IP - 5/1/2023 2130 MST
 
 This comprehensive menu-based installer is designed for individuals who wish to host their own chatbot UI on a cloud server instead of using Versal. It automates the installation and configuration process for all necessary components on your Ubuntu server.
 
@@ -30,14 +18,13 @@ Like all of my menu-based installers, this one includes additional steps that co
 - Installs and configures Nginx
 - Installs and configures Certbot
 - Installs and configures Docker and Docker Compose
-- Installs Custom Login Form on demand
-- Removes Custom Login Form on demand
 - Configures environment variables
+- Configures HTTPS SSL/TLS Certs for your domain
 - Checks for updates to McKay Wrigley's Chatbot UI and applies them
 - Launches Chatbot UI
 
 ## On demand Features for Login Form install:
-1. Build another Docker Image using Node and JSON Web Token
+1. Builds another Docker Image for Node and JSON Web Token to handle authenication
 2. Add LoginForm to components/Settings/LoginForm.tsx 
 3. Replace pages/_app.tsx and with code needed for interaction with LoginForm.tsx
 4. Create utils/app/auth.ts for storing and removing access session token
@@ -53,8 +40,13 @@ Like all of my menu-based installers, this one includes additional steps that co
 6. Takes your cert details and configures them to Nginx
 7. Downloads Mckay Wrigley's Chatbot UI
 8. Takes your VAR inputs for API keys and Prompts - Defaults if no input is provided
-9. Build Docker Image based on input
+9. Builds ChatbotUI Docker Image based on input
 10. Starts Docker Image and is ready for interactions
+11. Install Nimdy's Login Form
+12. Builds Docker Image for JSON Web Token and Node configuration ports
+13. Rebuilds ChatbotUI Docker Image with Login Form and JWT
+14. Rebuilds NGINX Server Configurations and adds JWT API call location blocks
+15. Starts all services and is ready for interactions
 
 
 
@@ -93,6 +85,12 @@ usermod -aG sudo UserNameYouWant
 3. Switch to UserNameYouWant
 ```
 su UserNameYouWant
+```
+
+## Configure your domain name
+Make sure your domain name is pointing to your VPS IP address. 
+```
+https://docs.digitalocean.com/tutorials/dns-registrars/
 ```
 
 ## Installation Steps
@@ -138,15 +136,16 @@ cd chatgpt-menu-installer
 ```
 pip3 install -r requirements.txt
 ```
-
 ## Now you are ready to start the menu. Time to go for a ride! 
 
-## Start Menu
+9. Start the menu:
 To start the installation menu, run the following command:
 ```
 python3 menu.py
-```
 
+10. Press 2 to install Chatbot UI
+
+11. Accept the 
 
 
 
