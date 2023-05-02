@@ -1143,7 +1143,7 @@ def print_menu():
     print(colored("3. Install Nimdys Login Form", "green"))
     print(colored("4. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
-    print(colored("99. Update Username, Password, JWT Key, Bypass Rule", "green"))
+    print(colored("99. Update Username, Password, and JWT Key, "green"))
     print(colored("0. Exit", "green"))
 
 def main():
