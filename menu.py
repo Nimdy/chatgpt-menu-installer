@@ -1050,15 +1050,18 @@ def build_jwt_config_docker_image():
     # Step 3: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
-        return
+        return False
 
     try:
         # Build the Docker image and start it using docker-compose
-        subprocess.call(["docker-compose", "up", "-d"])  # Use call() instead of run()
+        subprocess.check_call(["docker-compose", "up", "-d"])  # Use check_call() instead of call()
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
+        return True
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
+        return False
+
 
 
 # Call all the plugin functions for install and complete them in order
