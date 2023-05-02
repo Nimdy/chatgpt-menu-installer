@@ -1041,6 +1041,7 @@ def nginx_config_update():
         print("Nginx service restarted.")
     else:
         print("Failed to inject location block.")
+
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
     # Step 1: Change to the appropriate directory
@@ -1073,15 +1074,13 @@ def build_jwt_config_docker_image():
         os.chdir(jwt_config_dir)
 
         # Build the Docker image and start it using docker-compose
-        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
+        success, stdout, stderr = safe_system_call(["docker-compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
         return True
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
-
-
 
 
 
