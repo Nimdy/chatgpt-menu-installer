@@ -993,25 +993,19 @@ def build_jwt_config_docker_image():
 
     os.chdir(jwt_config_dir)
 
-    # Build the Docker image using docker-compose
-    success, stdout, stderr = run_command(['docker-compose', 'build'])
-    if success:
+    try:
+        # Build the Docker image using docker-compose
+        subprocess.run(['docker-compose', 'build'], check=True)
         print('Successfully built the JWT Config Docker image.')
-    else:
-        print(f'An error occurred while building the Docker image: {stderr}')
-        os.chdir(current_dir)
-        return
 
-    # Start the Docker container using docker-compose
-    success, stdout, stderr = run_command(['docker-compose', 'up', '-d'])
-    if success:
+        # Start the Docker container using docker-compose
+        subprocess.run(['docker-compose', 'up', '-d'], check=True)
         print('Successfully started the JWT Config Docker container.')
-    else:
-        print(f'An error occurred while starting the Docker container: {stderr}')
+    except subprocess.CalledProcessError as e:
+        print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
 
     # Change back to the original directory
     os.chdir(current_dir)
-
 
 # Call all the plugin functions for install and complete them in order
 def install_nimdys_login_form():
