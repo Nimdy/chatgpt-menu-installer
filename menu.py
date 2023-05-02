@@ -898,8 +898,11 @@ def add_nimdys_login_form():
         if correct_info:
             break
 
+        # Get the absolute path of the chatgpt-menu-installer directory
+        installer_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
         # Save JWT-related vars in the jwt-config directory
-        jwt_config_path = os.path.join(os.getcwd(), "plugins", "jwt-config")
+        jwt_config_path = os.path.join(installer_dir, "plugins", "jwt-config")
         os.makedirs(jwt_config_path, exist_ok=True)
 
         jwt_env_path = os.path.join(jwt_config_path, ".env.local")
@@ -1044,14 +1047,27 @@ def nginx_config_update():
 
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    jwt_config_dir="plugins/jwt-config/"
-    # rename .env.local.example to .env.local
-    if os.path.exists(jwt_config_dir + ".env.local.example"):
-        shutil.move(jwt_config_dir + ".env.local.example", jwt_config_dir + ".env.local")
+    # Step 1: Change to the appropriate directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
     else:
-        print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n")
-        
-    # Check if the jwt-config directory exists
+        os.chdir(os.path.expanduser("~"))
+
+    # Step 2: Search for the chatgpt-menu-installer directory
+    installer_dir = None
+    for root, dirs, files in os.walk("."):
+        if "chatgpt-menu-installer" in dirs:
+            installer_dir = os.path.abspath(os.path.join(root, "chatgpt-menu-installer"))
+            break
+
+    if not installer_dir:
+        print("chatgpt-menu-installer directory not found. Please ensure it is installed in the appropriate location.")
+        return False
+
+    # Step 3: Construct the path to the jwt-config directory inside the chatgpt-menu-installer directory
+    jwt_config_dir = os.path.join(installer_dir, "plugins", "jwt-config")
+
+    # Step 4: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
@@ -1061,7 +1077,7 @@ def build_jwt_config_docker_image():
         os.chdir(jwt_config_dir)
 
         # Build the Docker image and start it using docker-compose
-        success, stdout, stderr = safe_system_call(["docker-compose", "up", "-d"])
+        success, stdout, stderr = safe_system_call(["docker-compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
         print(jwt_config_dir)
@@ -1069,7 +1085,6 @@ def build_jwt_config_docker_image():
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
-    
 
 
 
