@@ -1005,7 +1005,7 @@ def build_jwt_config_docker_image():
         return
 
     os.chdir(jwt_config_dir)
-
+    print(jwt_config_dir)
     try:
         # Build the Docker image using docker-compose
         subprocess.run(['docker-compose', 'build'], check=True)
