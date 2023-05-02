@@ -951,8 +951,6 @@ def rebuild_chatbot_ui_docker_image():
 
     print("GPT Chatbot UI Docker Image rebuild completed.\n")
 
-
-
 # Step 5: Update the Nginx configuration for /api/jwt/
 def nginx_config_update():
     def find_nginx_config_directory():
@@ -998,9 +996,9 @@ def nginx_config_update():
             domain_config = re.search(r'(server\s*{[^}]*server_name\s+' + domain + r';[^}]*})', config)
             if domain_config:
                 # Remove any existing /api/jwt/ location block from the configuration
-                config = re.sub(r'location /api/jwt/ {.*?}\n}\n', '', config, flags=re.DOTALL)
+                config = re.sub(r'location /api/jwt/ {.*?}\n', '', config, flags=re.DOTALL)
                 # Append the new location block to the configuration
-                updated_domain_config = domain_config.group(1) + new_config_block + '\n}'
+                updated_domain_config = domain_config.group(1).rstrip('}') + new_config_block + '\n}'
                 config = config.replace(domain_config.group(1), updated_domain_config)
                 # Use a temporary file to write the updated configuration
                 with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
