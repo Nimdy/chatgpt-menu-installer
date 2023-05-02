@@ -919,6 +919,8 @@ def nginx_config_update():
             with open(config_file, 'r') as f:
                 config = f.read()
             domains += re.findall(r'server_name\s+(.*?);', config)
+        # Remove duplicates by converting the list to a set and then back to a list
+        domains = list(set(domains))
         return domains
 
     def select_domain(domains):
