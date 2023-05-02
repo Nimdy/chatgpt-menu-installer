@@ -302,6 +302,33 @@ def update_gpt_chatbot_ui():
     else:
         print("GPT Chatbot UI is already up to date.\n")
 
+def update_jwt_config():
+    env_local_file = "/opt/chatgpt-menu-installer/plugins/jwt-config/.env.local"
+    
+    # Read existing values from the .env.local file
+    env_vars = {}
+    if os.path.exists(env_local_file):
+        with open(env_local_file, "r") as f:
+            for line in f:
+                key, value = line.strip().split("=")
+                env_vars[key] = value
+
+    # Set default values if not present
+    env_vars.setdefault("JWT_USERNAME", "admin")
+    env_vars.setdefault("JWT_PASSWORD", "password")
+    env_vars.setdefault("JWT_SECRET", "secret")
+
+    # Get new values from the user
+    for key, default_value in env_vars.items():
+        env_vars[key] = get_user_response(f"Enter {key}", default_value)
+
+    # Update the .env.local file
+    with open(env_local_file, "w") as f:
+        for key, value in env_vars.items():
+            f.write(f"{key}={value}\n")
+
+    print("JWT config updated.")
+
 def update_progress_file(progress_filename, step):
     with open(progress_filename, "w") as f:
         f.write(str(step))
@@ -898,6 +925,7 @@ def add_nimdys_login_form():
 
     # Save JWT-related vars in the jwt-config directory
     jwt_config_path = "/opt/chatgpt-menu-installer/plugins/jwt-config"
+    env_local_file = os.path.join(jwt_config_path, ".env.local")
     os.makedirs(jwt_config_path, exist_ok=True)
     update_env_file(os.path.join(jwt_config_path, ".env.local"), env_vars, key_filter=lambda key: key.startswith("JWT_"))
 
@@ -1115,6 +1143,7 @@ def print_menu():
     print(colored("3. Install Nimdys Login Form", "green"))
     print(colored("4. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
+    print(colored("99. Update Username, Password, JWT Key, Bypass Rule", "green"))
     print(colored("0. Exit", "green"))
 
 def main():
@@ -1145,6 +1174,8 @@ def main():
             check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
+        elif choice == "99":
+            update_jwt_config()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
