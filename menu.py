@@ -921,30 +921,28 @@ def rebuild_chatbot_ui_docker_image():
 
     os.chdir("chatbot-ui")
 
-    try:
-        # Define the name of the Docker image
-        image_name = 'chatbot-ui_chatgpt'
-        
-        # Define the path to the Dockerfile (adjust as needed)
-        dockerfile_path = './Dockerfile'
-        
-        # Define the build context directory (adjust as needed)
-        context_dir = '.'
-        
-        # Remove the existing Docker image (if it exists)
-        try:
-            subprocess.run(['docker', 'rmi', image_name], check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            if 'No such image' not in e.stderr.decode():
-                raise  # re-raise the exception if it's due to a different error
-                
-        # Build the new Docker image
-        subprocess.call(["docker-compose", "up", "-d"])  # Use call() instead of run()
-        
-        print(f'Successfully rebuilt the {image_name} Docker image.')
-    except subprocess.CalledProcessError as e:
-        print(f'An error occurred while rebuilding the Docker image: {e.stderr.decode()}')
+    # Test the docker-compose
+    print("Testing the docker-compose...\n")
+    success, stdout, stderr = run_command(["docker-compose", "config"])
 
+    if not success:
+        print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        print(f"Stdout: {stdout}\nStderr: {stderr}\n")
+        return
+
+    # Ask the user if they wish to start/rebuild the services
+    user_input = input("Do you want to start/rebuild the services? (y/n): ").lower()
+    if user_input == "y":
+        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
+        if success:
+            print("Services rebuilt and started.\n")
+        else:
+            print(f"Error starting services: {stderr}\n")
+    else:
+        print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
+        print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
+
+    print("GPT Chatbot UI Docker Image rebuild completed.\n")
 
 
 
