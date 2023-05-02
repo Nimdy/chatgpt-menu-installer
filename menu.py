@@ -811,8 +811,8 @@ def add_nimdys_login_form():
         return
 
     # Download and add LoginForm.tsx to chatbot-ui/Settings/
-    shutil.copy(os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"),
-                os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx.bak"))
+    shutil.copy(os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx"),
+                os.path.join(chatbot_ui_path, "components/Settings/LoginForm.tsx.bak"))
     download_file("https://github.com/Nimdy/chatgpt-menu-installer/raw/main/plugins/LoginForm.tsx",
                   os.path.join(chatbot_ui_path, "Settings/LoginForm.tsx"))
 
