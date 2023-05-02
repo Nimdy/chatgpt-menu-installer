@@ -752,7 +752,6 @@ def add_formik_and_axios():
 
     # Run the function to update the Dockerfile
     print("Updating the Chatbot-UI Dockerfile to allow updating of the package-lock.json file...")
-    update_chatbotui_dockerfile()
 
 ## Step 2: updated commands to update the package-lock.json file when running the Dockerfile
 def update_chatbotui_dockerfile():
@@ -785,7 +784,6 @@ def update_chatbotui_dockerfile():
     print("Dockerfile has been updated successfully.")
 
     print("Rebuilding the Docker image...")
-    rebuild_chatbot_ui_docker_image()
 
 ## Step 3: Add Nimdys login form
 def add_nimdys_login_form():
@@ -997,6 +995,17 @@ def build_jwt_config_docker_image():
     # Change back to the original directory
     os.chdir(current_dir)
 
+# Call all the plugin functions for install and complete them in order
+def install_nimdys_login_form():
+    # Execute the functions in the specified order
+    add_formik_and_axios()
+    update_chatbotui_dockerfile()
+    add_nimdys_login_form()
+    rebuild_chatbot_ui_docker_image()
+    nginx_config_update()
+    build_jwt_config_docker_image()
+
+    print("Installation completed successfully.")
 
 
 def remove_nimdys_login_form():
@@ -1053,11 +1062,10 @@ def print_menu():
     print(colored("\nMenu:", "green"))
     print(colored("1. Update & Upgrade System", "green"))
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
-    print(colored("3. Add Nimdys Login Form", "green"))
+    print(colored("3. Install Nimdys Login Form", "green"))
     print(colored("4. Remove Nimdys Login Form", "green"))
     print(colored("5. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
-    print(colored("43. Testing Plugin Inject", "green"))
     print(colored("0. Exit", "green"))
 
 def main():
@@ -1083,15 +1091,13 @@ def main():
         elif choice == "2":
             main_installation_function()
         elif choice == "3":
-            add_nimdys_login_form()
+            install_nimdys_login_form()
         elif choice == "4":
             remove_nimdys_login_form()
         elif choice == "5":
             check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
-        elif choice == "43":
-            add_formik_and_axios()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
