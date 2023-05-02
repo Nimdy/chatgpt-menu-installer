@@ -447,15 +447,12 @@ def step2_setup_ssl_certbot(step):
 def step3_install_docker_docker_compose_git(step):
     print("Installing Docker, Docker Compose, and Git...\n")
 
-    print("Installing Git...\n")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "git"])
-
     print("Installing Docker...\n")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker.io"])
+    success, stdout, stderr = run_command(["sudo", "apt", "install", "-y", "docker.io"])
     success, stdout, stderr = run_command(["sudo", "systemctl", "enable", "--now", "docker"])
 
     print("Installing Docker Compose...\n")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker-compose"])
+    success, stdout, stderr = run_command(["sudo", "apt", "install", "-y", "docker-compose"])
 
     current_user = getpass.getuser()
     if current_user == "root":
