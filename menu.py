@@ -972,7 +972,6 @@ def nginx_config_update():
             with open(config_file, 'r') as f:
                 config = f.read()
             domains += re.findall(r'server_name\s+(.*?);', config)
-        # Remove duplicates by converting the list to a set and then back to a list
         domains = list(set(domains))
         return domains
 
@@ -987,8 +986,6 @@ def nginx_config_update():
             except ValueError:
                 print("Please enter a valid number.")
 
-    import tempfile
-
     def inject_location_block(config_directory, domain, new_config_block):
         config_files = glob.glob(os.path.join(config_directory, '*'))
         for config_file in config_files:
@@ -996,22 +993,15 @@ def nginx_config_update():
                 config = f.read()
             domain_config = re.search(r'(server\s*{[^}]*server_name\s+' + domain + r';[^}]*})', config)
             if domain_config:
-                # Remove any existing /api/jwt/ location block from the configuration
                 config = re.sub(r'location /api/jwt/ {.*?}\n', '', config, flags=re.DOTALL)
-                # Append the new location block to the configuration
                 updated_domain_config = domain_config.group(1).rstrip('}') + new_config_block + '\n}'
                 config = config.replace(domain_config.group(1), updated_domain_config)
-                # Use a temporary file to write the updated configuration
                 with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
                     temp.write(config)
                     temp_filename = temp.name
-                # Use sudo to copy the temporary file to the original configuration file
                 subprocess.run(['sudo', 'cp', temp_filename, config_file])
-                # Remove the temporary file
                 os.unlink(temp_filename)
-                # Check the validity of the updated configuration
                 subprocess.run(['sudo', 'nginx', '-t'])
-                # Restart the Nginx service
                 subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
                 return True
         return False
@@ -1028,18 +1018,14 @@ def nginx_config_update():
         proxy_buffering off;
     }
     '''
-    def restart_nginx():
-        subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
     domains = get_domains_from_config(config_directory)
     selected_domain = select_domain(domains)
     if inject_location_block(config_directory, selected_domain, new_config_block):
         print(f"Location block injected for domain: {selected_domain}")
-        # Restart the Nginx service after the location block is injected
-        restart_nginx()
+        subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
         print("Nginx service restarted.")
     else:
         print("Failed to inject location block.")
-
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
     # Step 1: Get the path of the menu.py script
