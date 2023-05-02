@@ -693,7 +693,7 @@ def get_total_connections():
     except Exception as e:
         print(f"Error retrieving connection count: {e}")
         return 0
-
+    
 def get_active_connections():
     try:
         log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
@@ -717,8 +717,8 @@ def get_active_connections():
         return count
     except Exception as e:
         print(f"Error retrieving active connection count: {e}")
-        return 0
-    
+        return 0   
+
 def check_dependency_status():
     dependencies = {
         "git": "git --version",
@@ -1121,6 +1121,7 @@ def print_menu():
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Install Nimdys Login Form", "green"))
     print(colored("4. Quick dependency check", "green"))
+    print(colored("5. CERTBOT TEST", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
     print(colored("0. Exit", "green"))
 
@@ -1150,6 +1151,8 @@ def main():
             install_nimdys_login_form()
         elif choice == "4":
             check_dependency_status()   
+        elif choice == "5":
+            certbot_test()
         elif choice == "42":
             update_gpt_chatbot_ui()
         elif choice == "0":
