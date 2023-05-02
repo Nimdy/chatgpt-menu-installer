@@ -149,15 +149,86 @@ python3 menu.py
 
 11. Accept any defaults
 
+12. Install Nginx Server
+![image](https://user-images.githubusercontent.com/16698453/235570854-0586cc5b-e98c-4e82-95c8-cfde1434cf38.png)
 
-![image](https://user-images.githubusercontent.com/16698453/232345507-fa2c9c9d-69f9-4415-bda3-ec5b6adce580.png)
+13. Press Y to add a new domain
+![image](https://user-images.githubusercontent.com/16698453/235570940-573af654-88d6-4bb3-b2ea-2619371e8f19.png)
+
+14. Enter Domain Name
+![image](https://user-images.githubusercontent.com/16698453/235571012-96108502-4b67-4f99-975d-b16b923efc2b.png)
+
+15. Restart Nginx
+![image](https://user-images.githubusercontent.com/16698453/235571040-f80caac3-1902-4b3d-aa8c-51c59b71012d.png)
+
+16. Setup Certbot
+![image](https://user-images.githubusercontent.com/16698453/235571073-a6442e72-b76a-415c-8b19-fc5773d81631.png)
+
+17. Enter your Certbot Details
+![image](https://user-images.githubusercontent.com/16698453/235571175-afba789d-d0d3-4f0b-946e-6607f7011963.png)
+
+18. Agree to auto or not
+![image](https://user-images.githubusercontent.com/16698453/235571305-ba73a1ea-ee45-4b18-a26f-5a7d55cf5bb9.png)
+
+19. Complete Certbot with Defaults or your own picks
+
+20. Docker will start to install and finish. Press "N" for no and stop install 
+![image](https://user-images.githubusercontent.com/16698453/235571447-26531d90-2e76-470a-8f9c-bca73fd1c80a.png)
+
+21. Switch back to root and then back to your account you created at the very start of the installation
+![image](https://user-images.githubusercontent.com/16698453/235571634-3e82d53b-68d9-4365-8212-aa7a313f0e86.png)
+
+22. Launch menu again
+```
+python3 menu.py
+```
+
+23. Press 2 and continue the install of Chatbot UI by McKay Wrigley - the script will continue where you left off because of the docker security and workflow in this design
+![image](https://user-images.githubusercontent.com/16698453/235571779-22dd736c-5c7b-436a-a636-13ff93ea8350.png)
+
+24. Enter your Variables as needed and if you agree press Y
+![image](https://user-images.githubusercontent.com/16698453/235571870-c81be659-ad5a-46a5-9cbe-e06774429a9c.png)
+
+25. Over write the .env.local file with your new variable information
+![image](https://user-images.githubusercontent.com/16698453/235571939-9c3ca447-df11-4c50-b65a-bb3a57842c04.png)
+
+26. Checks to verify Docker is part of your group, please Y
+![image](https://user-images.githubusercontent.com/16698453/235572009-197bba82-07c5-4348-bea7-ab015a947d97.png)
+
+27. Switch to root and then back to your user (might be a dup action, I can fix later)
+![image](https://user-images.githubusercontent.com/16698453/235572153-f4c8751a-a283-4ae9-bdc8-b98446412ea9.png)
+
+28. Open the menu again and press 2 to continue with the install
+![image](https://user-images.githubusercontent.com/16698453/235572312-75acd70d-ffa2-4327-a73e-6cb110600bf5.png)
+
+29. Yes I have a dup function... Continue with the same variable input and continue. Chatbot UI will now download and install. Wait for it to finish
+![image](https://user-images.githubusercontent.com/16698453/235572572-3f591d72-a3c1-424b-ad1b-3f0cdd23cf90.png)
+
+30. ChatbotUI is fully optional now
+![image](https://user-images.githubusercontent.com/16698453/235572717-bc4a56cd-7ea5-45f1-ba9c-4557b3ab890b.png)
+
+31. Add my login form if you wish by pressing 3
+![image](https://user-images.githubusercontent.com/16698453/235572771-d0234044-3c3c-4f9d-b667-42f082ea480a.png)
+I have added Formik and Axios to the ChatbotUI package.json file
+
+32. Enter your username and password for login. Enter your Bypass login or not. Enter your JWT Secret Key for auth tokens
+![image](https://user-images.githubusercontent.com/16698453/235572994-4b2f1597-eaf8-41a8-a194-1a78d928c2b7.png)
+
+33. Say yes to rebuilding the ChatbotUI Docker Image. This is going to take the LoginForm, _app.tsx and auth.ts files and rebuild the Docker Image. Wait for it to finish.
+![image](https://user-images.githubusercontent.com/16698453/235573045-f805ea2c-a402-4071-b913-b9aea8b2a08d.png)
 
 
 
-My login plugin
 
 
-![image](https://user-images.githubusercontent.com/16698453/232345653-6792b639-0652-4cd1-8d27-5e8dd9affaba.png)
+
+
+
+
+
+
+
+
 
 ## Disclaimer
 This project is currently in development and is intended for testing purposes only. Please use caution when using it on a production server. The project currently supports Ubuntu LTS, and testing on other platforms is pending.
