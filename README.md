@@ -17,6 +17,13 @@ Before starting, please ensure that you have a VPS, SSH access, and a properly c
 
 Like all of my menu-based installers, this one includes additional steps that could potentially be condensed into one-liner commands. However, my intention in designing these installers is to assist individuals who are new to Linux and are in the process of learning. By providing a more detailed and step-by-step approach, I aim to help users understand the correct procedures before introducing them to shortcuts. I appreciate your understanding and kindness as you use this installer. :)
 
+## Test at 
+https://epihak.com
+
+username: admin
+password: password
+
+
 ## Features
 - Installs McKay Wrigley's Chatbot UI
 - Installs and configures Nginx
