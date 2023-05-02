@@ -939,11 +939,12 @@ def rebuild_chatbot_ui_docker_image():
                 raise  # re-raise the exception if it's due to a different error
                 
         # Build the new Docker image
-        run_command(["docker-compose", "up", "-d"])
+        subprocess.call(["docker-compose", "up", "-d"])  # Use call() instead of run()
         
         print(f'Successfully rebuilt the {image_name} Docker image.')
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while rebuilding the Docker image: {e.stderr.decode()}')
+
 
 
 
@@ -1044,7 +1045,7 @@ def build_jwt_config_docker_image():
 
     try:
         # Build the Docker image and start it using docker-compose
-        run_command(["docker-compose", "up", "-d"])
+        subprocess.call(["docker-compose", "up", "-d"])  # Use call() instead of run()
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
     except subprocess.CalledProcessError as e:
