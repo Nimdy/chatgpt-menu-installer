@@ -1044,11 +1044,8 @@ def nginx_config_update():
 
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    installer_dir="plugins/jwt-config/"
-    # Step 1: Construct the path to the jwt-config directory inside the chatgpt-menu-installer directory
-    jwt_config_dir = os.path.join(installer_dir, "plugins", "jwt-config")
-
-    # Step 2: Check if the jwt-config directory exists
+    jwt_config_dir="plugins/jwt-config/"
+    # Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
