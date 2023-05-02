@@ -124,6 +124,7 @@ sudo apt install python3-pip
 
 6. Clone this repo
 ```
+cd /opt
 git clone https://github.com/Nimdy/chatgpt-menu-installer.git
 ```
 
