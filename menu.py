@@ -997,14 +997,8 @@ def nginx_config_update():
                 config = f.read()
             domain_config = re.search(r'(server\s*{[^}]*server_name\s+' + domain + r';[^}]*})', config)
             if domain_config:
-                # Check if the location block already exists in the configuration
-                if new_config_block.strip() in domain_config.group(1):
-                    print("Location block already exists. Skipping.")
-                    return True
-                # Remove the existing location block if it is different from the new block
-                existing_location_block = re.search(r'(location /api/jwt/ {.*?})\n}\n', domain_config.group(1), re.DOTALL)
-                if existing_location_block and existing_location_block.group(1) != new_config_block.strip():
-                    config = config.replace(existing_location_block.group(1), '')
+                # Remove any existing /api/jwt/ location block from the configuration
+                config = re.sub(r'location /api/jwt/ {.*?}\n}\n', '', config, flags=re.DOTALL)
                 # Append the new location block to the configuration
                 updated_domain_config = domain_config.group(1) + new_config_block + '\n}'
                 config = config.replace(domain_config.group(1), updated_domain_config)
@@ -1016,8 +1010,13 @@ def nginx_config_update():
                 subprocess.run(['sudo', 'cp', temp_filename, config_file])
                 # Remove the temporary file
                 os.unlink(temp_filename)
+                # Check the validity of the updated configuration
+                subprocess.run(['sudo', 'nginx', '-t'])
+                # Restart the Nginx service
+                subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
                 return True
         return False
+
 
 
     def restart_nginx():
