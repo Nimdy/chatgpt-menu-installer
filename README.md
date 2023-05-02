@@ -250,7 +250,12 @@ I have added Formik and Axios to the ChatbotUI package.json file
 
 ![image](https://user-images.githubusercontent.com/16698453/235577230-0ffaeeb6-e28c-4a16-9530-81f4ab4ece25.png)
 
+Now you should see the new login form:
 
+![image](https://user-images.githubusercontent.com/16698453/235577935-2ab8b648-1cff-49f3-8f5c-d9c4e03d6265.png)
+
+
+![image](https://user-images.githubusercontent.com/16698453/235578240-68aae394-f0ec-4864-8102-098c084e3237.png)
 
 
 
