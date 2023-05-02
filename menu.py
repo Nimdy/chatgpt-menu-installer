@@ -429,7 +429,7 @@ def step2_setup_ssl_certbot(step):
     cert_path = f"/etc/letsencrypt/live/{domain_name}/fullchain.pem"
     if not os.path.exists(cert_path):
         print(f"\nCertificate file not found at {cert_path}. Requesting a new SSL certificate for the domain...\n")
-        success = run_certbot_command_pty(["sudo", "certbot", "--nginx", "--non-interactive", "--agree-tos" "-d", domain_name, "--register-unsafely-without-email" ])
+        success = run_certbot_command_pty(["sudo", "certbot", "--nginx", "-d", domain_name])
         if not success:
             print("SSL certificate request failed.")
             return
