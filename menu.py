@@ -939,7 +939,7 @@ def rebuild_chatbot_ui_docker_image():
                 raise  # re-raise the exception if it's due to a different error
                 
         # Build the new Docker image
-        subprocess.run(['docker', 'build', '-t', image_name, '-f', dockerfile_path, context_dir], check=True)
+        subprocess.run(['docker-compose', 'up', '--build', '-d'], check=True)
         
         print(f'Successfully rebuilt the {image_name} Docker image.')
     except subprocess.CalledProcessError as e:
