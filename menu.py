@@ -1044,7 +1044,7 @@ def build_jwt_config_docker_image():
         os.chdir(jwt_config_dir)
 
         # Build the Docker image and start it using docker-compose
-        subprocess.check_call(["docker-compose", "up", "-d"])  # Use check_call() instead of call()
+        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
         return True
