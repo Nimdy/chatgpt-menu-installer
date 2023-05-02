@@ -140,13 +140,14 @@ pip3 install -r requirements.txt
 
 9. Start the menu:
 To start the installation menu, run the following command:
+![image](https://user-images.githubusercontent.com/16698453/235570661-a41f2154-a398-4eb5-bb23-adff9cd59259.png)
+
 ```
 python3 menu.py
-
+```
 10. Press 2 to install Chatbot UI
 
-11. Accept the 
-
+11. Accept any defaults
 
 
 ![image](https://user-images.githubusercontent.com/16698453/232345507-fa2c9c9d-69f9-4415-bda3-ec5b6adce580.png)
