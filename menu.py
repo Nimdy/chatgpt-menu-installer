@@ -75,20 +75,26 @@ def download_file(url, local_path):
     except requests.exceptions.RequestException as e:
         print(f"Error downloading file: {e}")
 
-def get_user_response(prompt):
+def get_user_response(prompt, default_value=None, allowed_values=None):
+    if default_value is not None:
+        prompt = f"{prompt} (default: '{default_value}')"
+
     print(prompt)
 
     while True:
-        response = input().strip().lower()
+        response = input().strip()
 
-        if response in ['y', 'n', 'q']:
-            if response == 'q':
-                raise SystemExit("User chose to quit.")
-            else:
-                return response == 'y'
+        if allowed_values is not None:
+            response = response.lower()
+
+        if not response and default_value is not None:
+            return default_value
+
+        if allowed_values is None or response in allowed_values:
+            return response
         else:
-            print("Invalid input. Please enter 'y', 'n', or 'q' to quit.")
-
+            print(f"Invalid input. Please enter one of the following: {', '.join(allowed_values)}")
+            
 def is_domain_publicly_visible(domain_name=None):
     if domain_name is None:
         domain_name = load_domain_name_from_file()
@@ -1111,7 +1117,6 @@ def print_menu():
     print(colored("4. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
     print(colored("0. Exit", "green"))
-
 
 def main():
     load_domain_name_from_file()
