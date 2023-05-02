@@ -11,6 +11,7 @@ import tempfile
 import getpass
 import grp
 import glob
+import sys
 import pty
 import json
 from termcolor import colored
@@ -1044,11 +1045,11 @@ def nginx_config_update():
 
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    # Step 1: Get the current working directory
-    current_dir = os.getcwd()
+    # Step 1: Get the path of the menu.py script
+    menu_py_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 
     # Step 2: Construct the path to the jwt-config directory inside the plugins directory
-    jwt_config_dir = os.path.join(current_dir, "plugins", "jwt-config")
+    jwt_config_dir = os.path.join(menu_py_path, "plugins", "jwt-config")
 
     # Step 3: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
@@ -1056,6 +1057,9 @@ def build_jwt_config_docker_image():
         return False
 
     try:
+        # Change the working directory to the jwt-config directory
+        os.chdir(jwt_config_dir)
+
         # Build the Docker image and start it using docker-compose
         subprocess.check_call(["docker-compose", "up", "-d"])  # Use check_call() instead of call()
         print('Successfully built the JWT Config Docker image.')
