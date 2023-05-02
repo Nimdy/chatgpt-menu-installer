@@ -952,6 +952,10 @@ def nginx_config_update():
                 config = f.read()
             domain_config = re.search(r'(server\s*{[^}]*server_name\s+' + domain + r';[^}]*})', config)
             if domain_config:
+                # Check if the location block already exists in the configuration
+                if new_config_block.strip() in domain_config.group(1):
+                    print("Location block already exists. Skipping.")
+                    return True
                 updated_domain_config = domain_config.group(1) + new_config_block + '\n}'
                 config = config.replace(domain_config.group(1), updated_domain_config)
                 # Use a temporary file to write the updated configuration
@@ -964,7 +968,6 @@ def nginx_config_update():
                 os.unlink(temp_filename)
                 return True
         return False
-
 
     def restart_nginx():
         subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
