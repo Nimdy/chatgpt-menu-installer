@@ -1004,21 +1004,17 @@ def build_jwt_config_docker_image():
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return
 
-    os.chdir(jwt_config_dir)
-    print(jwt_config_dir)
     try:
         # Build the Docker image using docker-compose
-        subprocess.run(['docker-compose', 'build'], check=True)
+        subprocess.run(['docker-compose', 'build'], check=True, cwd=jwt_config_dir)
         print('Successfully built the JWT Config Docker image.')
 
         # Start the Docker container using docker-compose
-        subprocess.run(['docker-compose', 'up', '-d'], check=True)
+        subprocess.run(['docker-compose', 'up', '-d'], check=True, cwd=jwt_config_dir)
         print('Successfully started the JWT Config Docker container.')
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
 
-    # Change back to the original directory
-    os.chdir(current_dir)
 
 # Call all the plugin functions for install and complete them in order
 def install_nimdys_login_form():
