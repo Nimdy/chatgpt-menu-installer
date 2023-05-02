@@ -1045,6 +1045,12 @@ def nginx_config_update():
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
     jwt_config_dir="plugins/jwt-config/"
+    # rename .env.local.example to .env.local
+    if os.path.exists(jwt_config_dir + ".env.local.example"):
+        shutil.move(jwt_config_dir + ".env.local.example", jwt_config_dir + ".env.local")
+    else:
+        print("Warning: .env.local.example file not found. Skipping this step. Please ensure the .env.local file is properly configured.\n")
+        
     # Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
