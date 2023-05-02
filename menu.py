@@ -754,7 +754,7 @@ def add_formik_and_axios():
     # Run the function to update the Dockerfile
     print("Updating the Chatbot-UI Dockerfile to allow updating of the package-lock.json file...")
 
-## Step 2: updated commands to update the package-lock.json file when running the Dockerfile
+# Step 2: updated commands to update the package-lock.json file when running the Dockerfile
 def update_chatbotui_dockerfile():
     # Step 1: Change back to the user directory
     if getpass.getuser() == "root":
@@ -786,18 +786,18 @@ def update_chatbotui_dockerfile():
         "    npm ci\n"
     ]
 
-    # Step 5: Remove undesired lines
-    dockerfile_content = [line for line in dockerfile_content if line not in undesired_lines]
+    # Step 5: Replace undesired lines with the desired lines
+    for i, line in enumerate(dockerfile_content):
+        if dockerfile_content[i:i+3] == undesired_lines:
+            dockerfile_content[i:i+3] = desired_lines
+            break
 
-    # Step 6: Append the desired lines if they are not in the Dockerfile content
-    if all(line not in dockerfile_content for line in desired_lines):
-        dockerfile_content += desired_lines
-
-    # Step 7: Write the updated content to the Dockerfile
+    # Step 6: Write the updated content to the Dockerfile
     with open("Dockerfile", "w") as file:
         file.writelines(dockerfile_content)
 
     print("Dockerfile has been updated successfully.")
+
 
 
 ## Step 3: Add Nimdys login form
