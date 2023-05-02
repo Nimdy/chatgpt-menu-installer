@@ -502,15 +502,14 @@ def step3_install_docker_docker_compose(step):
     success, stdout, stderr = run_command(["sudo", "systemctl", "restart", "docker"])
     if not success:
         print(f"Error restarting Docker service: {stderr}")
-    
-    update_step_status(step)
 
     print("Installation of Docker, Docker Compose, and Git completed.")
     print("You need to refresh your shell session for the changes to take effect.")
     print("Please log out and log back in or run the following command to refresh your shell session:")
     print("    exec su -l $USER")
     print("After refreshing your shell session, run this script again to continue with menu option 3.")
-    
+    update_step_status(step)
+    update_progress_file("installation_progress.txt", step)
     time.sleep(3)
     sys.exit()
 
