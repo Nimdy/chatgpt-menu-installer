@@ -523,13 +523,18 @@ def step4_setup_gpt_chatbot_ui(step):
     if not os.path.exists("chatbot-ui"):
         user_input = input("The 'chatbot-ui' directory was not found. Do you want to download it? (y/n): ").lower()
         if user_input == "y":
-            success, stdout, stderr = run_command(["git", "clone", "https://github.com/mckaywrigley/chatbot-ui.git"])
+            success, stdout, stderr = run_command(["sudo", "git", "clone", "https://github.com/mckaywrigley/chatbot-ui.git"])
             if not success:
                 print(f"Error: Failed to download the 'chatbot-ui' directory. Please try again.\nStdout: {stdout}\nStderr: {stderr}\n")
                 return
             if not os.path.exists("chatbot-ui"):
                 print("Error: Failed to download the 'chatbot-ui' directory. Please try again.\n")
                 return
+
+            current_user = getpass.getuser()
+            success, stdout, stderr = run_command(["sudo", "chown", "-R", f"{current_user}:{current_user}", "chatbot-ui"])
+            if not success:
+                print(f"Error changing ownership of 'chatbot-ui' directory: {stderr}\n")
         else:
             print("Please download the 'chatbot-ui' directory and follow the instructions.\n")
             return
@@ -874,9 +879,9 @@ def add_nimdys_login_form():
     while True:
         for key, default_value in env_vars.items():
             if key == "NEXT_PUBLIC_BYPASS_LOGIN":
-                env_vars[key] = get_user_input(f"Enter {key}", default_value, ["true", "false"]).capitalize()
+                env_vars[key] = get_user_response(f"Enter {key}", default_value, ["true", "false"]).capitalize()
             else:
-                env_vars[key] = get_user_input(f"Enter {key}", default_value)
+                env_vars[key] = get_user_response(f"Enter {key}", default_value)
 
         print("\nPlease verify the entered values:")
         for key, value in env_vars.items():
@@ -917,7 +922,7 @@ def rebuild_chatbot_ui_docker_image():
         return
 
     # Ask the user if they wish to start/rebuild the services
-    user_input = get_user_input("Do you want to start/rebuild the services?", "n", ["y", "n"])
+    user_input = get_user_response("Do you want to start/rebuild the services?", "n", ["y", "n"])
     if user_input == "y":
         success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
         if success:

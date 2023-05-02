@@ -143,7 +143,7 @@ sudo pip3 install -r requirements.txt
 9. Start the menu:
 To start the installation menu, run the following command with sudo
 ```
-sudo python3 menu.py
+ython3 menu.py
 ```
 
 10. Press 2 to install Chatbot UI
