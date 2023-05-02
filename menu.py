@@ -1145,7 +1145,7 @@ def main():
         elif choice == "4":
             check_dependency_status()   
         elif choice == "5":
-            certbot_test()
+            step2_setup_ssl_certbot()
         elif choice == "42":
             update_gpt_chatbot_ui()
         elif choice == "0":
