@@ -20,8 +20,8 @@ Like all of my menu-based installers, this one includes additional steps that co
 ## Test at 
 https://epihak.com
 
-username: admin
-password: password
+Login:
+admin  ||  password
 
 
 ## Features
