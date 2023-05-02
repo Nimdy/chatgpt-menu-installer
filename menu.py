@@ -276,7 +276,7 @@ def main_installation_function():
         elif step == 2:
             step2_setup_ssl_certbot(step)
         elif step == 3:
-            step3_install_docker_docker_compose_git(step)
+            step3_install_docker_docker_compose(step)
         elif step == 4:
             step4_setup_gpt_chatbot_ui(step)
         update_progress_file(progress_filename, step)
@@ -444,7 +444,7 @@ def step2_setup_ssl_certbot(step):
     # Add one liner and take user input for the following command
     #certbot --nginx --non-interactive --agree-tos --domains domain_name --email email_address
 
-def step3_install_docker_docker_compose_git(step):
+def step3_install_docker_docker_compose(step):
     print("Installing Docker, Docker Compose, and Git...\n")
 
     print("Installing Docker...\n")
@@ -502,13 +502,15 @@ def step3_install_docker_docker_compose_git(step):
     success, stdout, stderr = run_command(["sudo", "systemctl", "restart", "docker"])
     if not success:
         print(f"Error restarting Docker service: {stderr}")
+    
+    update_step_status(step)
 
     print("Installation of Docker, Docker Compose, and Git completed.")
     print("You need to refresh your shell session for the changes to take effect.")
     print("Please log out and log back in or run the following command to refresh your shell session:")
     print("    exec su -l $USER")
     print("After refreshing your shell session, run this script again to continue with menu option 3.")
-    update_step_status(step)
+    
     time.sleep(3)
     sys.exit()
 
@@ -761,7 +763,6 @@ def add_formik_and_axios():
 
     # Run the function to update the Dockerfile
     print("Updating the Chatbot-UI Dockerfile to allow updating of the package-lock.json file...")
-
 
 # Step 2: updated commands to update the package-lock.json file when running the Dockerfile
 def update_chatbotui_dockerfile():
