@@ -1043,18 +1043,28 @@ def nginx_config_update():
         print("Failed to inject location block.")
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    # Step 1: Get the path of the menu.py script
-    menu_py_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    # Step 1: Check if the chatgpt-menu-installer directory exists in the home directory
+    home_dir = os.path.expanduser("~")
+    chatgpt_menu_installer_dir = os.path.join(home_dir, "chatgpt-menu-installer")
+
+    # If not found, check /opt directory
+    if not os.path.exists(chatgpt_menu_installer_dir):
+        opt_dir = "/opt"
+        chatgpt_menu_installer_dir = os.path.join(opt_dir, "chatgpt-menu-installer")
+
+    # If still not found, print error message and return False
+    if not os.path.exists(chatgpt_menu_installer_dir):
+        print("chatgpt-menu-installer directory not found in home or /opt directory.")
+        return False
 
     # Step 2: Construct the path to the jwt-config directory inside the plugins directory
-    jwt_config_dir = os.path.join(menu_py_path, "plugins", "jwt-config")
-    print(jwt_config_dir)
+    jwt_config_dir = os.path.join(chatgpt_menu_installer_dir, "plugins", "jwt-config")
+
     # Step 3: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
 
-    original_dir = os.getcwd()
     try:
         # Change the working directory to the jwt-config directory
         os.chdir(jwt_config_dir)
@@ -1067,8 +1077,6 @@ def build_jwt_config_docker_image():
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
-    finally:
-        os.chdir(original_dir)
 
 
 
