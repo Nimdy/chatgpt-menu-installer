@@ -928,7 +928,10 @@ def rebuild_chatbot_ui_docker_image():
         context_dir = '.'
         
         # Remove the existing Docker image (if it exists)
-        subprocess.run(['docker', 'rmi', image_name], check=True, capture_output=True)
+        try:
+            subprocess.run(['docker', 'rmi', image_name], check=True, capture_output=True)
+        except subprocess.CalledProcessError:
+            print(f'The Docker image {image_name} does not exist. Proceeding to build it.')
         
         # Build the new Docker image
         subprocess.run(['docker', 'build', '-t', image_name, '-f', dockerfile_path, context_dir], check=True)
@@ -936,6 +939,7 @@ def rebuild_chatbot_ui_docker_image():
         print(f'Successfully rebuilt the {image_name} Docker image.')
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while rebuilding the Docker image: {e.stderr.decode()}')
+
 
 # Step 5: Update the Nginx configuration for /api/jwt/
 def nginx_config_update():
