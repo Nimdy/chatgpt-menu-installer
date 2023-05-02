@@ -778,7 +778,7 @@ COPY package*.json ./
 # ---- Dependencies ----
 FROM base AS dependencies
 RUN npm update && \\
-           npm ci
+    npm ci
 
 # ---- Build ----
 FROM dependencies AS build
@@ -806,8 +806,6 @@ CMD ["npm", "start"]"""
         file.write(desired_content)
 
     print("Dockerfile has been updated successfully.")
-
-
 
 ## Step 3: Add Nimdys login form
 def add_nimdys_login_form():
@@ -983,8 +981,12 @@ def nginx_config_update():
         print("Available domains:")
         for i, domain in enumerate(domains):
             print(f"{i + 1}. {domain}")
-        choice = int(input("Select a domain by entering its number: "))
-        return domains[choice - 1]
+        while True:
+            try:
+                choice = input("Select a domain by entering its number: ")
+                return domains[int(choice) - 1]
+            except ValueError:
+                print("Please enter a valid number.")
 
     import tempfile
 
