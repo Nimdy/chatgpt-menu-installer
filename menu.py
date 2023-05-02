@@ -769,32 +769,41 @@ def update_chatbotui_dockerfile():
 
     os.chdir("chatbot-ui")
 
-    # Step 3: Read the Dockerfile
-    with open("Dockerfile", "r") as file:
-        dockerfile_content = file.readlines()
+    # Step 3: Define the desired Dockerfile content
+    desired_content = """# ---- Base Node ----
+FROM node:19-alpine AS base
+WORKDIR /app
+COPY package*.json ./
 
-    # Step 4: Check if the undesired lines are present
-    undesired_lines = [
-        "# ---- Dependencies ----\n",
-        "FROM base AS dependencies\n",
-        "RUN npm ci\n"
-    ]
-    desired_lines = [
-        "# ---- Dependencies ----\n",
-        "FROM base AS dependencies\n",
-        "RUN npm update && \\\n",
-        "    npm ci\n"
-    ]
+# ---- Dependencies ----
+FROM base AS dependencies
+RUN npm update && \\
+           npm ci
 
-    # Step 5: Replace undesired lines with the desired lines
-    for i, line in enumerate(dockerfile_content):
-        if dockerfile_content[i:i+3] == undesired_lines:
-            dockerfile_content[i:i+3] = desired_lines
-            break
+# ---- Build ----
+FROM dependencies AS build
+COPY . .
+RUN npm run build
 
-    # Step 6: Write the updated content to the Dockerfile
+# ---- Production ----
+FROM node:19-alpine AS production
+WORKDIR /app
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/next.config.js ./next.config.js
+COPY --from=build /app/next-i18next.config.js ./next-i18next.config.js
+
+# Expose the port the app will run on
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]"""
+
+    # Step 4: Write the desired content to the Dockerfile
     with open("Dockerfile", "w") as file:
-        file.writelines(dockerfile_content)
+        file.write(desired_content)
 
     print("Dockerfile has been updated successfully.")
 
