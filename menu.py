@@ -1043,24 +1043,27 @@ def nginx_config_update():
         print("Failed to inject location block.")
 # Step 6: Build JWT Dockerfile
 def build_jwt_config_docker_image():
-    # Step 1: Check if the chatgpt-menu-installer directory exists in the home directory
-    home_dir = os.path.expanduser("~")
-    chatgpt_menu_installer_dir = os.path.join(home_dir, "chatgpt-menu-installer")
+    # Step 1: Change to the appropriate directory
+    if getpass.getuser() == "root":
+        os.chdir("/opt")
+    else:
+        os.chdir(os.path.expanduser("~"))
 
-    # If not found, check /opt directory
-    if not os.path.exists(chatgpt_menu_installer_dir):
-        opt_dir = "/opt"
-        chatgpt_menu_installer_dir = os.path.join(opt_dir, "chatgpt-menu-installer")
+    # Step 2: Search for the chatgpt-menu-installer directory
+    installer_dir = None
+    for root, dirs, files in os.walk("."):
+        if "chatgpt-menu-installer" in dirs:
+            installer_dir = os.path.join(root, "chatgpt-menu-installer")
+            break
 
-    # If still not found, print error message and return False
-    if not os.path.exists(chatgpt_menu_installer_dir):
-        print("chatgpt-menu-installer directory not found in home or /opt directory.")
+    if not installer_dir:
+        print("chatgpt-menu-installer directory not found. Please ensure it is installed in the appropriate location.")
         return False
 
-    # Step 2: Construct the path to the jwt-config directory inside the plugins directory
-    jwt_config_dir = os.path.join(chatgpt_menu_installer_dir, "plugins", "jwt-config")
+    # Step 3: Construct the path to the jwt-config directory inside the chatgpt-menu-installer directory
+    jwt_config_dir = os.path.join(installer_dir, "plugins", "jwt-config")
 
-    # Step 3: Check if the jwt-config directory exists
+    # Step 4: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
         return False
@@ -1077,6 +1080,7 @@ def build_jwt_config_docker_image():
     except subprocess.CalledProcessError as e:
         print(f'An error occurred while building and starting the Docker container: {e.stderr.decode()}')
         return False
+
 
 
 
