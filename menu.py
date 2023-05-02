@@ -1048,7 +1048,7 @@ def build_jwt_config_docker_image():
 
     # Step 2: Construct the path to the jwt-config directory inside the plugins directory
     jwt_config_dir = os.path.join(menu_py_path, "plugins", "jwt-config")
-
+    print(jwt_config_dir)
     # Step 3: Check if the jwt-config directory exists
     if not os.path.exists(jwt_config_dir):
         print("JWT Config plugin is not installed. Please ensure the directory exists.\n")
