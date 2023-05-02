@@ -94,7 +94,7 @@ def get_user_response(prompt, default_value=None, allowed_values=None):
             return response
         else:
             print(f"Invalid input. Please enter one of the following: {', '.join(allowed_values)}")
-            
+
 def is_domain_publicly_visible(domain_name=None):
     if domain_name is None:
         domain_name = load_domain_name_from_file()
@@ -682,10 +682,13 @@ def get_total_connections():
     try:
         log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
         count = 0
-        if os.path.exists(log_file_path):
-            with open(log_file_path, "r") as f:
-                for line in f:
-                    count += 1
+        success, output, error = run_command(["sudo", "cat", log_file_path])
+
+        if success:
+            count = len(output.splitlines())
+        else:
+            print(f"Error reading log file: {error}")
+
         return count
     except Exception as e:
         print(f"Error retrieving connection count: {e}")
@@ -698,14 +701,18 @@ def get_active_connections():
         current_time = time.time()
         count = 0
 
-        if os.path.exists(log_file_path):
-            with open(log_file_path, "r") as f:
-                for line in f:
-                    timestamp = re.search(r'\[(.*?)\]', line)
-                    if timestamp:
-                        log_time = time.mktime(time.strptime(timestamp.group(1), "%d/%b/%Y:%H:%M:%S %z"))
-                        if (current_time - log_time) <= time_threshold:
-                            count += 1
+        success, output, error = run_command(["sudo", "cat", log_file_path])
+
+        if success:
+            log_lines = output.splitlines()
+            for line in log_lines:
+                timestamp = re.search(r'\[(.*?)\]', line)
+                if timestamp:
+                    log_time = time.mktime(time.strptime(timestamp.group(1), "%d/%b/%Y:%H:%M:%S %z"))
+                    if (current_time - log_time) <= time_threshold:
+                        count += 1
+        else:
+            print(f"Error reading log file: {error}")
 
         return count
     except Exception as e:
@@ -744,7 +751,6 @@ def check_dependency_status():
     print("\nDependency check completed.")
 
 ## Nimdys Login Form and JSONWEBTOKEN Addon Functions ##
-
 ## Step 1 add formik and axios to package.json
 def add_formik_and_axios():
     # Define the chatbot-ui path
