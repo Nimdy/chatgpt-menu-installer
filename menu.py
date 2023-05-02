@@ -1114,7 +1114,6 @@ def print_menu():
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Install Nimdys Login Form", "green"))
     print(colored("4. Quick dependency check", "green"))
-    print(colored("5. CERTBOT TEST", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
     print(colored("0. Exit", "green"))
 
@@ -1144,8 +1143,6 @@ def main():
             install_nimdys_login_form()
         elif choice == "4":
             check_dependency_status()   
-        elif choice == "5":
-            step2_setup_ssl_certbot()
         elif choice == "42":
             update_gpt_chatbot_ui()
         elif choice == "0":
