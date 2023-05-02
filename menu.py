@@ -1016,11 +1016,6 @@ def nginx_config_update():
                 return True
         return False
 
-
-
-    def restart_nginx():
-        subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
-
     config_directory = find_nginx_config_directory()
     new_config_block = '''
     location /api/jwt/ {
@@ -1033,11 +1028,13 @@ def nginx_config_update():
         proxy_buffering off;
     }
     '''
-
+    def restart_nginx():
+        subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
     domains = get_domains_from_config(config_directory)
     selected_domain = select_domain(domains)
     if inject_location_block(config_directory, selected_domain, new_config_block):
         print(f"Location block injected for domain: {selected_domain}")
+        # Restart the Nginx service after the location block is injected
         restart_nginx()
         print("Nginx service restarted.")
     else:
