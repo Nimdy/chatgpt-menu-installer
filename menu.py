@@ -1125,7 +1125,10 @@ def print_menu():
     print(colored("4. Remove Nimdys Login Form", "green"))
     print(colored("5. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
+    print(colored("99. Test JWT Build", "green"))
+
     print(colored("0. Exit", "green"))
+
 
 def main():
     load_domain_name_from_file()
@@ -1157,6 +1160,8 @@ def main():
             check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
+        elif choice == "99":
+            build_jwt_config_docker_image()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
