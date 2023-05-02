@@ -682,18 +682,15 @@ def get_total_connections():
     try:
         log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
         count = 0
-        success, output, error = run_command(["sudo", "cat", log_file_path])
-
-        if success:
-            count = len(output.splitlines())
-        else:
-            print(f"Error reading log file: {error}")
-
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as f:
+                for line in f:
+                    count += 1
         return count
     except Exception as e:
         print(f"Error retrieving connection count: {e}")
         return 0
-    
+       
 def get_active_connections():
     try:
         log_file_path = "/var/log/nginx/access.log"  # Update the path to the desired log file
@@ -701,24 +698,20 @@ def get_active_connections():
         current_time = time.time()
         count = 0
 
-        success, output, error = run_command(["sudo", "cat", log_file_path])
-
-        if success:
-            log_lines = output.splitlines()
-            for line in log_lines:
-                timestamp = re.search(r'\[(.*?)\]', line)
-                if timestamp:
-                    log_time = time.mktime(time.strptime(timestamp.group(1), "%d/%b/%Y:%H:%M:%S %z"))
-                    if (current_time - log_time) <= time_threshold:
-                        count += 1
-        else:
-            print(f"Error reading log file: {error}")
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as f:
+                for line in f:
+                    timestamp = re.search(r'\[(.*?)\]', line)
+                    if timestamp:
+                        log_time = time.mktime(time.strptime(timestamp.group(1), "%d/%b/%Y:%H:%M:%S %z"))
+                        if (current_time - log_time) <= time_threshold:
+                            count += 1
 
         return count
     except Exception as e:
         print(f"Error retrieving active connection count: {e}")
-        return 0   
-
+        return 0
+    
 def check_dependency_status():
     dependencies = {
         "git": "git --version",
