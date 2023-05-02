@@ -18,77 +18,15 @@ from termcolor import colored
 
 domain_name = None
 
-def read_progress_file(progress_filename):
-    if os.path.exists(progress_filename):
-        with open(progress_filename, "r") as f:
-            return int(f.read().strip())
+def add_user_to_docker_group():
+    user = getpass.getuser()
+    print(f"Adding {user} to the docker group...")
+    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", user])
+    if success:
+        print("User added to the docker group. Please log out and log back in for the changes to take effect.")
     else:
-        with open(progress_filename, "w") as f:
-            f.write("0")
-        return 0
+        print(f"Error adding {user} to the docker group: {stderr}")
 
-def update_progress_file(progress_filename, step):
-    with open(progress_filename, "w") as f:
-        f.write(str(step))
-
-def save_domain_name_to_file(domain_name):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    domain_name_file = os.path.join(script_dir, "domain_name.txt")
-    
-    with open(domain_name_file, "w") as f:
-        f.write(domain_name)
-    print("\n")
-    print(f"Domain name saved to {domain_name_file}")
-    print("\n")
-
-def load_domain_name_from_file():
-    try:
-        with open("domain_name.txt", "r") as f:
-            domain_name = f.read().strip()
-    except FileNotFoundError:
-        domain_name = ""
-        print("Domain name not found. It will be set during the Nginx configuration process.")
-    
-    return domain_name
-
-def get_user_response(prompt):
-    print(prompt)
-
-    while True:
-        response = input().strip().lower()
-
-        if response in ['y', 'n', 'q']:
-            if response == 'q':
-                raise SystemExit("User chose to quit.")
-            else:
-                return response == 'y'
-        else:
-            print("Invalid input. Please enter 'y', 'n', or 'q' to quit.")
-
-def update_env_file(env_path, updated_vars, key_filter=lambda key: True):
-    existing_vars = {}
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
-    
-    with open(env_path, "w") as f:
-        for key, value in {**existing_vars, **updated_vars}.items():
-            if key_filter(key):
-                f.write(f"{key}={value}\n")
-
-def safe_system_call(cmd):
-    if isinstance(cmd, str):
-        cmd = cmd.split()
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return result.returncode == 0, result.stdout, result.stderr
-
-def run_command(args, stdin=None, stdout=None):
-    try:
-        result = subprocess.run(args, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, text=True)
-        return True, result.stdout, result.stderr
-    except Exception as e:
-        return False, "", str(e)
-    
 def create_new_user():
     while True:
         new_username = input("Enter a new username: ").strip()
@@ -119,9 +57,37 @@ def create_new_user():
     print(f"User {new_username} created with sudo permissions.\n")
     return new_username
 
+def check_docker_group_membership():
+    user = getpass.getuser()
+    group_members = grp.getgrnam("docker").gr_mem
+    return user in group_members
+
 def check_nginx_running():
     success, output, _ = safe_system_call("systemctl is-active nginx")
     return success and output.strip() == "active"
+
+def download_file(url, local_path):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(local_path, "wb") as f:
+            f.write(response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading file: {e}")
+
+def get_user_response(prompt):
+    print(prompt)
+
+    while True:
+        response = input().strip().lower()
+
+        if response in ['y', 'n', 'q']:
+            if response == 'q':
+                raise SystemExit("User chose to quit.")
+            else:
+                return response == 'y'
+        else:
+            print("Invalid input. Please enter 'y', 'n', or 'q' to quit.")
 
 def is_domain_publicly_visible(domain_name=None):
     if domain_name is None:
@@ -158,19 +124,127 @@ def is_nginx_running():
     except (socket.timeout, socket.error) as e:
         return False
 
-def check_docker_group_membership():
-    user = getpass.getuser()
-    group_members = grp.getgrnam("docker").gr_mem
-    return user in group_members
+def load_domain_name_from_file():
+    try:
+        with open("domain_name.txt", "r") as f:
+            domain_name = f.read().strip()
+    except FileNotFoundError:
+        domain_name = ""
+        print("Domain name not found. It will be set during the Nginx configuration process.")
+    
+    return domain_name
 
-def add_user_to_docker_group():
-    user = getpass.getuser()
-    print(f"Adding {user} to the docker group...")
-    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", user])
-    if success:
-        print("User added to the docker group. Please log out and log back in for the changes to take effect.")
+def main_installation_function():
+    progress_filename = "installation_progress.txt"
+    
+    if os.path.exists(progress_filename):
+        saved_step = read_progress_file(progress_filename)
     else:
-        print(f"Error adding {user} to the docker group: {stderr}")
+        saved_step = 0
+
+    load_domain_name_from_file()
+
+    for step in range(saved_step + 1, 6):
+        if step == 1:
+            step1_configure_nginx(step)
+        elif step == 2:
+            step2_setup_ssl_certbot(step)
+        elif step == 3:
+            step3_install_docker_docker_compose(step)
+        elif step == 4:
+            step4_setup_gpt_chatbot_ui(step)
+        update_progress_file(progress_filename, step)
+
+    # Remove the progress file once the installation is complete
+    if os.path.exists(progress_filename):
+        os.remove(progress_filename)
+
+def read_progress_file(progress_filename):
+    if os.path.exists(progress_filename):
+        with open(progress_filename, "r") as f:
+            return int(f.read().strip())
+    else:
+        with open(progress_filename, "w") as f:
+            f.write("0")
+        return 0
+
+def run_certbot_command(args, stdin=None):
+    try:
+        with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            while True:
+                stdout_output = proc.stdout.readline()
+                stderr_output = proc.stderr.readline()
+                if stdout_output:
+                    print(stdout_output.strip())
+                elif stderr_output:
+                    print(stderr_output.strip())
+                else:
+                    break
+            proc.wait()
+            return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
+    except Exception as e:
+        return False, "", str(e)
+
+def run_certbot_command_pty(args):
+    try:
+        exit_code = pty.spawn(args)
+        return exit_code == 0
+    except Exception as e:
+        return False
+
+def run_command(args, stdin=None, stdout=None):
+    try:
+        result = subprocess.run(args, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE, text=True)
+        return True, result.stdout, result.stderr
+    except Exception as e:
+        return False, "", str(e)
+
+def save_domain_name_to_file(domain_name):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    domain_name_file = os.path.join(script_dir, "domain_name.txt")
+    
+    with open(domain_name_file, "w") as f:
+        f.write(domain_name)
+    print("\n")
+    print(f"Domain name saved to {domain_name_file}")
+    print("\n")
+
+def safe_system_call(cmd):
+    if isinstance(cmd, str):
+        cmd = cmd.split()
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.returncode == 0, result.stdout, result.stderr
+
+def update_and_upgrade_system():
+    print("Updating the package list...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "update"])
+    if not success:
+        print(f"Error updating package list: {stderr}")
+
+    print("Upgrading the system...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "upgrade", "-y"])
+    if not success:
+        print(f"Error upgrading the system: {stderr}")
+
+    print("Cleaning up unused packages...")
+    success, stdout, stderr = run_command(["sudo", "apt-get", "autoremove", "-y"])
+    if not success:
+        print(f"Error cleaning up unused packages: {stderr}")
+
+    print("System update and upgrade completed.")
+    print("Please reboot the system to apply the changes.")
+    print("After rebooting, run this script again to continue with menu option 2.")
+
+def update_env_file(env_path, updated_vars, key_filter=lambda key: True):
+    existing_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            existing_vars = dict(line.strip().split('=') for line in f if line.strip() and not line.strip().startswith('#'))
+    
+    with open(env_path, "w") as f:
+        for key, value in {**existing_vars, **updated_vars}.items():
+            if key_filter(key):
+                f.write(f"{key}={value}\n")
 
 def update_gpt_chatbot_ui():
     print("Checking for updates in GPT Chatbot UI...\n")
@@ -222,89 +296,16 @@ def update_gpt_chatbot_ui():
     else:
         print("GPT Chatbot UI is already up to date.\n")
 
-def run_certbot_command(args, stdin=None):
-    try:
-        with subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-            while True:
-                stdout_output = proc.stdout.readline()
-                stderr_output = proc.stderr.readline()
-                if stdout_output:
-                    print(stdout_output.strip())
-                elif stderr_output:
-                    print(stderr_output.strip())
-                else:
-                    break
-            proc.wait()
-            return proc.returncode == 0, proc.stdout.read(), proc.stderr.read()
-    except Exception as e:
-        return False, "", str(e)
-
-def run_certbot_command_pty(args):
-    try:
-        exit_code = pty.spawn(args)
-        return exit_code == 0
-    except Exception as e:
-        return False
-
-def download_file(url, local_path):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(local_path, "wb") as f:
-            f.write(response.content)
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading file: {e}")
+def update_progress_file(progress_filename, step):
+    with open(progress_filename, "w") as f:
+        f.write(str(step))
 
 def update_step_status(step):
     for i in range(1, step):
         print(f"[✓] Step {i}", end=" ")
     print(f"[✗] Step {step}")
 
-def main_installation_function():
-    progress_filename = "installation_progress.txt"
-    
-    if os.path.exists(progress_filename):
-        saved_step = read_progress_file(progress_filename)
-    else:
-        saved_step = 0
-
-    load_domain_name_from_file()
-
-    for step in range(saved_step + 1, 6):
-        if step == 1:
-            step1_configure_nginx(step)
-        elif step == 2:
-            step2_setup_ssl_certbot(step)
-        elif step == 3:
-            step3_install_docker_docker_compose(step)
-        elif step == 4:
-            step4_setup_gpt_chatbot_ui(step)
-        update_progress_file(progress_filename, step)
-
-    # Remove the progress file once the installation is complete
-    if os.path.exists(progress_filename):
-        os.remove(progress_filename)
-
-def update_and_upgrade_system():
-    print("Updating the package list...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "update"])
-    if not success:
-        print(f"Error updating package list: {stderr}")
-
-    print("Upgrading the system...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "upgrade", "-y"])
-    if not success:
-        print(f"Error upgrading the system: {stderr}")
-
-    print("Cleaning up unused packages...")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "autoremove", "-y"])
-    if not success:
-        print(f"Error cleaning up unused packages: {stderr}")
-
-    print("System update and upgrade completed.")
-    print("Please reboot the system to apply the changes.")
-    print("After rebooting, run this script again to continue with menu option 2.")
-    
+## Main Install Steps for Chatbot UI
 def step1_configure_nginx(step):
     global domain_name
     print("Configuring Nginx...")
@@ -935,7 +936,6 @@ def rebuild_chatbot_ui_docker_image():
 
     print("GPT Chatbot UI Docker Image rebuild completed.\n")
 
-
 # Step 5: Update the Nginx configuration for /api/jwt/
 def nginx_config_update():
     def find_nginx_config_directory():
@@ -1052,7 +1052,7 @@ def install_nimdys_login_form():
 
     print("Installation completed successfully.")
 
-
+# Coming soon needs reworked
 def remove_nimdys_login_form():
     print("Removing Nimdys login form...")
 
@@ -1108,11 +1108,8 @@ def print_menu():
     print(colored("1. Update & Upgrade OS System", "green"))
     print(colored("2. Install Chatbot UI by McKay Wrigley", "green"))
     print(colored("3. Install Nimdys Login Form", "green"))
-    print(colored("4. Remove Nimdys Login Form", "green"))
-    print(colored("5. Quick dependency check", "green"))
+    print(colored("4. Quick dependency check", "green"))
     print(colored("42. Check for updates - GPT Chatbot UI", "green"))
-    print(colored("99. Test JWT Build", "green"))
-
     print(colored("0. Exit", "green"))
 
 
@@ -1141,13 +1138,9 @@ def main():
         elif choice == "3":
             install_nimdys_login_form()
         elif choice == "4":
-            remove_nimdys_login_form()
-        elif choice == "5":
             check_dependency_status()   
         elif choice == "42":
             update_gpt_chatbot_ui()
-        elif choice == "99":
-            build_jwt_config_docker_image()
         elif choice == "0":
             print(colored("Exiting... Close the Terminal to exit the script.", "red"))
             break
