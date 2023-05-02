@@ -930,6 +930,8 @@ def nginx_config_update():
         choice = int(input("Select a domain by entering its number: "))
         return domains[choice - 1]
 
+    import tempfile
+
     def inject_location_block(config_directory, domain, new_config_block):
         config_files = glob.glob(os.path.join(config_directory, '*'))
         for config_file in config_files:
@@ -939,10 +941,17 @@ def nginx_config_update():
             if domain_config:
                 updated_domain_config = domain_config.group(1) + new_config_block + '\n}'
                 config = config.replace(domain_config.group(1), updated_domain_config)
-                with open(config_file, 'w') as f:
-                    f.write(config)
+                # Use a temporary file to write the updated configuration
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
+                    temp.write(config)
+                    temp_filename = temp.name
+                # Use sudo to copy the temporary file to the original configuration file
+                subprocess.run(['sudo', 'cp', temp_filename, config_file])
+                # Remove the temporary file
+                os.unlink(temp_filename)
                 return True
         return False
+
 
     def restart_nginx():
         subprocess.run(['sudo', 'systemctl', 'restart', 'nginx'])
