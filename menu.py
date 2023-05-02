@@ -494,12 +494,12 @@ def step3_install_docker_docker_compose_git(step):
         selected_user = current_user
 
     print(f"Adding {selected_user} to the docker group...")
-    success, stdout, stderr = run_command(f"sudo usermod -aG docker {selected_user}")
+    success, stdout, stderr = run_command(["sudo", "usermod", "-aG", "docker", selected_user])
     if not success:
         print(f"Error adding {selected_user} to the docker group: {stderr}")
 
     # Restart Docker service
-    success, stdout, stderr = run_command("sudo systemctl restart docker")
+    success, stdout, stderr = run_command(["sudo", "systemctl", "restart", "docker"])
     if not success:
         print(f"Error restarting Docker service: {stderr}")
 
