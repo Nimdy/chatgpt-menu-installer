@@ -286,13 +286,13 @@ def update_gpt_chatbot_ui():
 
             # Step 6: Shut down the old Docker image
             print("Shutting down the old Docker image...\n")
-            success, stdout, stderr = run_command("docker-compose down")
+            success, stdout, stderr = run_command("docker compose down")
             if not success:
                 print(f"Error shutting down the old Docker image: {stderr}\n")
 
-            # Step 7: Create a new Docker image based on the updated docker-compose.yml file
+            # Step 7: Create a new Docker image based on the updated docker compose.yml file
             print("Creating a new Docker image...\n")
-            success, stdout, stderr = run_command("docker-compose up -d")
+            success, stdout, stderr = run_command("docker compose up -d")
             if not success:
                 print(f"Error creating a new Docker image: {stderr}\n")
 
@@ -461,7 +461,7 @@ def step3_install_docker_docker_compose(step):
     print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     print("Installing Docker Compose...\n")
-    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker-compose"])
+    success, stdout, stderr = run_command(["sudo", "apt-get", "install", "-y", "docker compose"])
     print(f"Stdout: {stdout}\nStderr: {stderr}\n")
 
     current_user = getpass.getuser()
@@ -600,12 +600,12 @@ def step4_setup_gpt_chatbot_ui(step):
             for key, value in env_vars.items():
                 f.write(f"{key}={value}\n")
 
-    # Test the docker-compose
-    print("Testing the docker-compose...\n")
-    success, stdout, stderr = run_command(["docker-compose", "config"])
+    # Test the docker compose
+    print("Testing the docker compose...\n")
+    success, stdout, stderr = run_command(["docker compose", "config"])
 
     if not success:
-        print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        print("There are errors in the docker compose configuration. Please fix them before proceeding.\n")
         print(f"Stdout: {stdout}\nStderr: {stderr}\n")
         return
 
@@ -623,15 +623,15 @@ def step4_setup_gpt_chatbot_ui(step):
     # Ask the user if they wish to start the services
     user_input = input("Do you want to start the Chatbot UI Docker service? (y/n): ").lower()
     if user_input == "y":
-        success, stdout, stderr = run_command(["docker-compose", "up", "-d"])
+        success, stdout, stderr = run_command(["docker compose", "up", "-d"])
         if success:
             update_step_status(step)
             print("Services started.\n")
         else:
             print(f"Error starting services: {stderr}\n")
     else:
-        print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
-        print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
+        print("To start the services manually, run 'docker compose up -d' in the chatbot-ui directory.\n")
+        print("To stop the services, run 'docker compose down' in the chatbot-ui directory.\n")
 
     print("GPT Chatbot UI setup completed.\n")
 
@@ -716,7 +716,7 @@ def check_dependency_status():
     dependencies = {
         "git": "git --version",
         "docker": "docker --version",
-        "docker-compose": "docker-compose --version",
+        "docker compose": "docker compose --version",
         "nginx": "nginx -v",
         "certbot": "certbot --version",
         "chatbot-ui": os.path.expanduser("~") + "/chatbot-ui",
@@ -918,26 +918,26 @@ def rebuild_chatbot_ui_docker_image():
 
     os.chdir(chatbot_ui_dir)
 
-    # Test the docker-compose
-    print("Testing the docker-compose...\n")
-    success, stdout, stderr = run_command(["docker-compose", "config"])
+    # Test the docker compose
+    print("Testing the docker compose...\n")
+    success, stdout, stderr = run_command(["docker compose", "config"])
 
     if not success:
-        print("There are errors in the docker-compose configuration. Please fix them before proceeding.\n")
+        print("There are errors in the docker compose configuration. Please fix them before proceeding.\n")
         print(f"Stdout: {stdout}\nStderr: {stderr}\n")
         return
 
     # Ask the user if they wish to start/rebuild the services
     user_input = get_user_response("Do you want to start/rebuild the services?", "n", ["y", "n"])
     if user_input == "y":
-        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
+        success, stdout, stderr = run_command(["docker compose", "up", "--build", "-d"])
         if success:
             print("Services rebuilt and started.\n")
         else:
             print(f"Error starting services: {stderr}\n")
     else:
-        print("To start the services manually, run 'docker-compose up -d' in the chatbot-ui directory.\n")
-        print("To stop the services, run 'docker-compose down' in the chatbot-ui directory.\n")
+        print("To start the services manually, run 'docker compose up -d' in the chatbot-ui directory.\n")
+        print("To stop the services, run 'docker compose down' in the chatbot-ui directory.\n")
 
     print("GPT Chatbot UI Docker Image rebuild completed.\n")
 
@@ -1035,8 +1035,8 @@ def build_jwt_config_docker_image():
         # Change the working directory to the jwt-config directory
         os.chdir(jwt_config_dir)
 
-        # Build the Docker image and start it using docker-compose
-        success, stdout, stderr = run_command(["docker-compose", "up", "--build", "-d"])
+        # Build the Docker image and start it using docker compose
+        success, stdout, stderr = run_command(["docker compose", "up", "--build", "-d"])
         print('Successfully built the JWT Config Docker image.')
         print('Successfully started the JWT Config Docker container.')
         print(jwt_config_dir)
