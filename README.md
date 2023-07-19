@@ -131,7 +131,7 @@ sudo reboot
 ```
 cd /opt
 sudo git clone https://github.com/Nimdy/chatgpt-menu-installer.git
-sudo chown -R $USER:$USER /chatgpt-menu-installer/
+sudo chown -R $USER:$USER chatgpt-menu-installer/
 ```
 
 7. Change into the new cloned repo director.
