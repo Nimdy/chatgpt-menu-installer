@@ -146,9 +146,9 @@ sudo pip3 install -r requirements.txt
 ## Now you are ready to start the menu. Time to go for a ride! 
 
 9. Start the menu:
-To start the installation menu, run the following command with sudo
+To start the installation menu, run the following command with sudo as system configs need updates
 ```
-python3 menu.py
+sudo python3 menu.py
 ```
 
 10. Start the Chatbot UI Installation
